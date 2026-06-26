@@ -47,11 +47,10 @@ filtro_tempo = st.sidebar.selectbox("Filtrar por Tempo Aberta:", ["Todos", "Meno
 # URL base fixa do Speckle em modo embed limpo original aprovado
 speckle_base_url = "https://speckle.systems"
 
-# INICIALIZAÇÃO DA MEMÓRIA PERSISTENTE DA PLANILHA
+# Inicialização da memória persistente para evitar perda de dados nas trocas de abas
 if 'df_memoria' not in st.session_state:
     st.session_state.df_memoria = pd.DataFrame()
 
-# Se o usuário carregar um arquivo novo, armazena no estado permanente da sessão
 if arquivo_upload is not None:
     try:
         if arquivo_upload.name.endswith('.csv'):
@@ -61,10 +60,9 @@ if arquivo_upload is not None:
     except Exception as e:
         st.sidebar.error(f"Erro ao ler o arquivo: {e}")
 
-# Recupera os dados guardados de forma segura
 df = st.session_state.df_memoria
 
-# Mapeia dinamicamente a lista de OS disponíveis sem perder a referência
+# Mapeia dinamicamente a lista de OS disponíveis
 if not df.empty and 'OS' in df.columns:
     lista_os = sorted(list(df['OS'].dropna().astype(str).unique()))
 else:
@@ -73,7 +71,7 @@ else:
 # Configuração estável do estado da sessão para sincronização de OS
 if 'os_selecionada' not in st.session_state or st.session_state.os_selecionada not in lista_os:
     if lista_os:
-        st.session_state.os_selecionada = lista_os[0]
+        st.session_state.os_selecionada = lista_os
 
 # -------------------------------------------------------------------------
 # EXTRAÇÃO REATIVA DE VARIÁVEIS COM BASE NA OS SELECIONADA
@@ -91,14 +89,14 @@ if not df.empty and 'OS' in df.columns:
     if not dados_os.empty:
         col_id = next((c for c in df.columns if c.upper() == 'ID'), None)
         if col_id:
-            id_bim_alvo = str(dados_os[col_id].values[0]).strip()
+            id_bim_alvo = str(dados_os[col_id].values).strip()
         col_t = next((c for c in df.columns if c.lower() in ['técnico', 'tecnico', 'responsável', 'responsavel']), None)
-        resp = str(dados_os[col_t].values[0]) if col_t else "Pedro"
-        setor = str(dados_os['Setor'].values[0]) if 'Setor' in df.columns else "Climatização"
-        status = str(dados_os['Status'].values[0]) if 'Status' in df.columns else "Fechado"
-        data_ab = str(dados_os['Data_Abertura'].values[0]) if 'Data_Abertura' in df.columns else "20/06/2026"
-        descricao_falha = str(dados_os['Descrição'].values[0]) if 'Descrição' in df.columns else "Sem descrição."
-        criticidade_ativo = str(dados_os['Criticidade'].values[0]) if 'Criticidade' in df.columns else "Média"
+        resp = str(dados_os[col_t].values) if col_t else "Pedro"
+        setor = str(dados_os['Setor'].values) if 'Setor' in df.columns else "Climatização"
+        status = str(dados_os['Status'].values) if 'Status' in df.columns else "Fechado"
+        data_ab = str(dados_os['Data_Abertura'].values) if 'Data_Abertura' in df.columns else "20/06/2026"
+        descricao_falha = str(dados_os['Descrição'].values) if 'Descrição' in df.columns else "Sem descrição."
+        criticidade_ativo = str(dados_os['Criticidade'].values) if 'Criticidade' in df.columns else "Média"
 
 if not id_bim_alvo or id_bim_alvo == "nan":
     id_bim_alvo = "29e456a92924eb3747bbcd9bb3edd623"
@@ -191,6 +189,10 @@ with aba_produtividade:
         st.info("💡 Por favor, certifique-se de que a planilha está carregada na barra lateral.")
 
 # ==========================================
-# ABA 3: CENTRO DE DIAGNÓSTICO (ESTÁVEL E PERSISTENTE)
+# ABA 3: CENTRO DE DIAGNÓSTICO (ESTÁVEL E REATIVA)
 # ==========================================
 with aba_diagnostico:
+    st.subheader("🧠 Centro de Diagnóstico Avançado (IA Preditiva)")
+    col_esq, col_dir = st.columns(2)
+    
+    with col_esq:
