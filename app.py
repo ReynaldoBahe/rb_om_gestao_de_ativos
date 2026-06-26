@@ -12,89 +12,31 @@ st.set_page_config(
 )
 
 # ==========================================
-# ABA 2: PRODUTIVIDADE E RELATÓRIO (COM FILTRO DE TEMPO ABERTO)
+# 2. DESIGN E ESTILIZAÇÃO CUSTOMIZADA (CSS)
 # ==========================================
-with aba_produtividade:
-    if not df.empty:
-        df_filtrado = df.copy()
-        
-        # 1. TRATAMENTO INTELIGENTE DE DATAS E TEMPO DE ABERTURA
-        if 'Data_Abertura' in df_filtrado.columns:
-            try:
-                # Converte a coluna para data de forma segura
-                df_filtrado['Data_Abertura_dt'] = pd.to_datetime(df_filtrado['Data_Abertura'], errors='coerce')
-                
-                # Considera a data atual do sistema (2026) para calcular os dias aberta
-                data_atual = pd.to_datetime('2026-06-26')
-                df_filtrado['Dias_Aberta'] = (data_atual - df_filtrado['Data_Abertura_dt']).dt.days
-                
-                # Aplica a filtragem na tabela com base na escolha da barra lateral
-                if filtro_tempo == "Menos de 24h":
-                    df_filtrado = df_filtrado[df_filtrado['Dias_Aberta'] <= 1]
-                elif filtro_tempo == "Entre 2 e 7 days":
-                    df_filtrado = df_filtrado[(df_filtrado['Dias_Aberta'] > 1) & (df_filtrado['Dias_Aberta'] <= 7)]
-                elif filtro_tempo == "Mais de 7 dias":
-                    df_filtrado = df_filtrado[df_filtrado['Dias_Aberta'] > 7]
-            except Exception as e:
-                st.warning(f"Aviso no cálculo de tempo operacional: {e}")
+st.markdown("""
+    <style>
+    .main-title { font-size: 32px; font-weight: bold; color: #1E3A8A; margin-bottom: 20px; }
+    .ficha-tecnica { background-color: #EFF6FF; padding: 20px; border-radius: 8px; border: 1px solid #BFDBFE; }
+    .vol-title { font-size: 20px; font-weight: bold; margin-top: 15px; }
+    .status-dot { display: inline-block; width: 10px; height: 10px; border-radius: 50%; margin-right: 5px; }
+    .dot-aberta { background-color: #22C55E; }
+    .dot-atendimento { background-color: #3B82F6; }
+    .dot-pausada { background-color: #EAB308; }
+    .dot-fechado { background-color: #EF4444; }
+    .vol-number { font-size: 36px; font-weight: bold; margin-top: 5px; }
+    </style>
+""", unsafe_allow_html=True)
 
-        # 2. APLICAÇÃO DOS FILTROS ORIGINAIS DE STATUS E CRITICIDADE
-        if filtro_status != "Todos" and 'Status' in df_filtrado.columns:
-            df_filtrado = df_filtrado[df_filtrado['Status'] == filtro_status]
-        if filtro_criticidade != "Todos" and 'Criticidade' in df_filtrado.columns:
-            df_filtrado = df_filtrado[df_filtrado['Criticidade'] == filtro_criticidade]
-            
-        # 3. RENDERIZAÇÃO DA VOLUMETRIA ATUALIZADA
-        st.markdown('<div class="vol-title">📊 Volumetria das Ordens de Serviço</div>', unsafe_allow_html=True)
-        col_status_name = next((c for c in df.columns if c.lower() == 'status'), None)
-        status_counts = df_filtrado[col_status_name].value_counts() if col_status_name else {}
-        
-        v_col1, v_col2, v_col3, v_col4 = st.columns(4)
-        with v_col1:
-            st.markdown('<div><span class="status-dot dot-aberta"></span>Aberta</div>', unsafe_allow_html=True)
-            st.markdown(f'<div class="vol-number">{int(status_counts.get("Aberta", 0))}</div>', unsafe_allow_html=True)
-        with v_col2:
-            st.markdown('<div><span class="status-dot dot-atendimento"></span>Em Atendimento</div>', unsafe_allow_html=True)
-            st.markdown(f'<div class="vol-number">{int(status_counts.get("Em Andamento", 0))}</div>', unsafe_allow_html=True)
-        with v_col3:
-            st.markdown('<div><span class="status-dot dot-pausada"></span>Pausada</div>', unsafe_allow_html=True)
-            st.markdown(f'<div class="vol-number">{int(status_counts.get("Pausada", 0))}</div>', unsafe_allow_html=True)
-        with v_col4:
-            st.markdown('<div><span class="status-dot dot-fechado"></span>Fechado</div>', unsafe_allow_html=True)
-            st.markdown(f'<div class="vol-number">{int(status_counts.get("Fechado", 0))}</div>', unsafe_allow_html=True)
-            
-        st.markdown("---")
-        
-        # 4. GRÁFICO ALTAIR REATIVO AO TEMPO ABERTO
-        st.subheader("Controle de Ordens de Serviço por Técnico")
-        col_tecnico = next((c for c in df_filtrado.columns if c.lower() in ['técnico', 'tecnico', 'responsável', 'responsavel', 'técnico responsável']), df_filtrado.columns[0])
-        
-        if not df_filtrado.empty:
-            df_produtividade = df_filtrado.groupby(col_tecnico).size().reset_index(name='Ordens')
-            df_produtividade.columns = ['Técnico', 'Ordens']
-            
-            grafico_altair = alt.Chart(df_produtividade).mark_bar(color='#1f77b4').encode(
-                x=alt.X('Técnico:N', title='Profissional Técnico', sort='-y'),
-                y=alt.Y('Ordens:Q', title='Total de Ordens de Serviço'),
-                tooltip=['Técnico', 'Ordens']
-            ).properties(width='container', height=350)
-            st.altair_chart(grafico_altair, use_container_width=True)
-        else:
-            st.info("Nenhuma ordem encontrada para a combinação de filtros selecionada.")
-        
-        st.markdown("---")
-        st.markdown('📋 **Relatório Sincronizado de Ordens de Serviço**')
-        st.dataframe(df_filtrado, use_container_width=True)
-    else:
-        st.info("💡 Por favor, certifique-se de que a planilha está carregada na barra lateral.")
+st.markdown('<div class="main-title">🏗️ Portal de Engenharia & Gestão de Projetos</div>', unsafe_allow_html=True)
 
 # ==========================================
-# 3. BARRA LATERAL (MENU ÚNICO, FIXO E ESTÁVEL NAS 3 ABAS)
+# 3. BARRA LATERAL (MENU ÚNICO, FIXO E ESTÁVEL)
 # ==========================================
 st.sidebar.header("Painel de Controle")
 
 # Campo de carregamento unificado no topo da área cinza
-arquivo_upload = st.sidebar.file_uploader("📂 Carregar Planilha CMMS (.csv)", type=["csv", "xlsx"])
+arquivo_upload = st.sidebar.file_uploader("📂 Carregar Planilha CMMS", type=["csv", "xlsx"])
 
 st.sidebar.write("---")
 st.sidebar.subheader("Filtros de Visão")
@@ -174,11 +116,29 @@ with aba_modelo:
     st.components.v1.iframe(speckle_base_url, height=600, scrolling=False)
 
 # ==========================================
-# ABA 2: PRODUTIVIDADE E RELATÓRIO (CÓDIGO ORIGINAL INTEGRAL APROVADO)
+# ABA 2: PRODUTIVIDADE E RELATÓRIO
 # ==========================================
 with aba_produtividade:
     if not df.empty:
         df_filtrado = df.copy()
+        
+        # TRATAMENTO INTELIGENTE DE DATAS E TEMPO DE ABERTURA
+        if 'Data_Abertura' in df_filtrado.columns:
+            try:
+                df_filtrado['Data_Abertura_dt'] = pd.to_datetime(df_filtrado['Data_Abertura'], errors='coerce')
+                data_atual = pd.to_datetime('2026-06-26')
+                df_filtrado['Dias_Aberta'] = (data_atual - df_filtrado['Data_Abertura_dt']).dt.days
+                
+                if filtro_tempo == "Menos de 24h":
+                    df_filtrado = df_filtrado[df_filtrado['Dias_Aberta'] <= 1]
+                elif filtro_tempo == "Entre 2 e 7 dias":
+                    df_filtrado = df_filtrado[(df_filtrado['Dias_Aberta'] > 1) & (df_filtrado['Dias_Aberta'] <= 7)]
+                elif filtro_tempo == "Mais de 7 dias":
+                    df_filtrado = df_filtrado[df_filtrado['Dias_Aberta'] > 7]
+            except Exception as e:
+                st.warning(f"Aviso no cálculo de tempo operacional: {e}")
+
+        # APLICAÇÃO DOS FILTROS ORIGINAIS DE STATUS E CRITICIDADE
         if filtro_status != "Todos" and 'Status' in df_filtrado.columns:
             df_filtrado = df_filtrado[df_filtrado['Status'] == filtro_status]
         if filtro_criticidade != "Todos" and 'Criticidade' in df_filtrado.columns:
@@ -186,7 +146,7 @@ with aba_produtividade:
             
         st.markdown('<div class="vol-title">📊 Volumetria das Ordens de Serviço</div>', unsafe_allow_html=True)
         col_status_name = next((c for c in df.columns if c.lower() == 'status'), None)
-        status_counts = df[col_status_name].value_counts() if col_status_name else {}
+        status_counts = df_filtrado[col_status_name].value_counts() if col_status_name else {}
         
         v_col1, v_col2, v_col3, v_col4 = st.columns(4)
         with v_col1:
@@ -206,15 +166,19 @@ with aba_produtividade:
         
         st.subheader("Controle de Ordens de Serviço por Técnico")
         col_tecnico = next((c for c in df_filtrado.columns if c.lower() in ['técnico', 'tecnico', 'responsável', 'responsavel', 'técnico responsável']), df_filtrado.columns)
-        df_produtividade = df_filtrado.groupby(col_tecnico).size().reset_index(name='Ordens')
-        df_produtividade.columns = ['Técnico', 'Ordens']
         
-        grafico_altair = alt.Chart(df_produtividade).mark_bar(color='#1f77b4').encode(
-            x=alt.X('Técnico:N', title='Profissional Técnico', sort='-y'),
-            y=alt.Y('Ordens:Q', title='Total de Ordens de Serviço'),
-            tooltip=['Técnico', 'Ordens']
-        ).properties(width='container', height=350)
-        st.altair_chart(grafico_altair, use_container_width=True)
+        if not df_filtrado.empty:
+            df_produtividade = df_filtrado.groupby(col_tecnico).size().reset_index(name='Ordens')
+            df_produtividade.columns = ['Técnico', 'Ordens']
+            
+            grafico_altair = alt.Chart(df_produtividade).mark_bar(color='#1f77b4').encode(
+                x=alt.X('Técnico:N', title='Profissional Técnico', sort='-y'),
+                y=alt.Y('Ordens:Q', title='Total de Ordens de Serviço'),
+                tooltip=['Técnico', 'Ordens']
+            ).properties(width='container', height=350)
+            st.altair_chart(grafico_altair, use_container_width=True)
+        else:
+            st.info("Nenhuma ordem encontrada para a combinação de filtros selecionada.")
         
         st.markdown("---")
         st.markdown('📋 **Relatório Sincronizado de Ordens de Serviço**')
@@ -223,7 +187,7 @@ with aba_produtividade:
         st.info("💡 Por favor, certifique-se de que a planilha está carregada na barra lateral.")
 
 # ==========================================
-# ABA 3: CENTRO DE DIAGNÓSTICO (CÓDIGO ORIGINAL INTEGRAL APROVADO)
+# ABA 3: CENTRO DE DIAGNÓSTICO
 # ==========================================
 with aba_diagnostico:
     st.subheader("🧠 Centro de Diagnóstico Avançado (IA Preditiva)")
@@ -232,21 +196,3 @@ with aba_diagnostico:
     with col_esq:
         st.markdown("🔎 **Seleção de Ativo para Auditoria**")
         
-        st.session_state.os_selecionada = st.selectbox(
-            "Selecione a OS para análise da IA:", 
-            lista_os, 
-            index=lista_os.index(st.session_state.os_selecionada) if st.session_state.os_selecionada in lista_os else 0
-        )
-        
-        html_ficha = "<div class='ficha-tecnica'>"
-        html_ficha += "<h4 style='margin-top:0; color:#1E3A8A;'>📋 Ficha Técnica do Ativo</h4>"
-        html_ficha += "<ul>"
-        html_ficha += f"<li><b>Ordem de Serviço:</b> {st.session_state.os_selecionada}</li>"
-        html_ficha += f"<li><b>ID BIM:</b> {id_bim_alvo}</li>"
-        html_ficha += f"<li><b>Responsável Técnico:</b> {resp}</li>"
-        html_ficha += f"<li><b>Setor / Subsistema:</b> {setor}</li>"
-        html_ficha += f"<li><b>Status Atual:</b> {status}</li>"
-        html_ficha += f"<li><b>Criticidade:</b> {criticidade_ativo}</li>"
-        html_ficha += f"<li><b>Data de Abertura:</b> {data_ab}</li>"
-        html_ficha += "</ul>"
-        html_ficha += "<hr style='border: 0; border-top: 1px solid #BFDBFE; margin: 10px 0;'>"
