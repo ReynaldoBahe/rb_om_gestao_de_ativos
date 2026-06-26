@@ -8,10 +8,8 @@ import altair as alt
 st.set_page_config(
     page_title="Portal de Engenharia & Produtividade",
     page_icon="🏗️",
-    layout="wide",
-    initial_sidebar_state="collapsed"
+    layout="wide"
 )
-
 
 # ==========================================
 # 2. DESIGN E ESTILIZAÇÃO CUSTOMIZADA (CSS)
@@ -37,13 +35,12 @@ st.markdown('<div class="main-title">🏗️ Portal de Engenharia & Gestão de P
 # ==========================================
 st.sidebar.header("Painel de Dados")
 
-# Removidos os seletores estáticos que não operavam sobre o WebGL nesta página
 arquivo_upload = st.sidebar.file_uploader("📂 Carregar Planilha de Ativos/OM", type=["csv", "xlsx"])
 
-# URL base do Speckle em modo embed limpo original aprovado
-speckle_base_url = "https://app.speckle.systems/projects/a649da7292/models/815af390c7?embedToken=5fc6fc722186f65bfe3c4be3286713af5a1ab94df3"
+# URL base do Speckle original aprovado
+speckle_base_url = "https://speckle.systems"
 
-# Lógica de carregamento de dados segura
+# Lógica de carregamento de dados segura (SEM CARTÃO VERDE DE SUCESSO)
 df = pd.DataFrame()
 if arquivo_upload is not None:
     try:
@@ -51,7 +48,6 @@ if arquivo_upload is not None:
             df = pd.read_csv(arquivo_upload)
         else:
             df = pd.read_excel(arquivo_upload)
-        st.sidebar.success("📊 Planilha carregada com sucesso!")
     except Exception as e:
         st.error(f"Erro ao ler o arquivo: {e}")
 
@@ -81,6 +77,18 @@ aba_modelo, aba_produtividade, aba_diagnostico = st.tabs([
 # ABA 1: MODELO 3D (RASTREABILIDADE BIM)
 # ==========================================
 with aba_modelo:
+    # Código CSS injetado especificamente nesta aba para forçar o recolhimento da barra lateral cinza
+    st.markdown("""
+        <style>
+        [data-testid="stSidebar"][aria-expanded="true"] {
+            display: none;
+        }
+        [data-testid="stSidebarCollapsedControl"] {
+            display: block;
+        }
+        </style>
+    """, unsafe_allow_html=True)
+
     st.subheader("Visualizador Operacional de Ativos 3D")
     
     id_bim_alvo = ""
@@ -94,10 +102,8 @@ with aba_modelo:
     if not id_bim_alvo or id_bim_alvo == "nan":
         id_bim_alvo = "29e456a92924eb3747bbcd9bb3edd623"
 
-    # Exibição elegante do rastreamento unificado com o Centro de Diagnóstico
     st.info(f"🔗 Módulo BIM Sincronizado | Rastreando Ativo ID: `{id_bim_alvo}` (Selecione outra OS na aba Centro de Diagnóstico para focar)")
     
-    # Renderização limpa do visualizador do resort original aprovado
     st.components.v1.iframe(speckle_base_url, height=600, scrolling=False)
 
 # ==========================================
@@ -107,7 +113,6 @@ with aba_produtividade:
     if not df.empty:
         df_filtrado = df.copy()
         
-        # Filtros locais para a volumetria e gráficos operacionais da equipe
         st.markdown("### 🎛️ Filtros do Relatório")
         f_col1, f_col2 = st.columns(2)
         with f_col1:
@@ -156,7 +161,7 @@ with aba_produtividade:
         st.markdown('📋 **Relatório Sincronizado de Ordens de Serviço**')
         st.dataframe(df_filtrado, use_container_width=True)
     else:
-        st.info("💡 Por favor, certifique-se de que a planilha está carregada na barra lateral.")
+        st.info("💡 Por favor, certifique-se de que a planilha está carregada na barra lateral das outras abas.")
 
 # ==========================================
 # ABA 3: CENTRO DE DIAGNÓSTICO AVANÇADO
