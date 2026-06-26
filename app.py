@@ -182,19 +182,13 @@ with aba_produtividade:
                 y=alt.Y('Ordens:Q', title='Total de Ordens de Serviço'),
                 tooltip=['Técnico', 'Ordens']
             ).properties(width='container', height=350)
-            st.altair_chart(grafico_altair, use_container_width=True)
-        else:
-            st.info("⚠️ Nenhuma ordem encontrada para o intervalo de tempo e filtros selecionados.")
-        
-        st.markdown("---")
-st.markdown('📋 **Relatório Sincronizado de Ordens de Serviço**')
-if 'df_filtrado' in locals() and not df_filtrado.empty:
-colunas_para_exibir = [c for c in df_filtrado.columns if c not in ['Data_Abertura_dt', 'Dias_Aberta', 'Tempo_Num']]
-st.dataframe(df_filtrado[colunas_para_exibir], use_container_width=True)
-
-
+        st.altair_chart(grafico_altair, use_container_width=True)
     else:
-        st.info("💡 Por favor, certifique-se de que a planilha está carregada na barra lateral.")
+        st.info("⚠️ Nenhuma ordem encontrada para o intervalo de tempo e filtros selecionados.")
+    st.markdown("---")
+        st.markdown('📋 **Relatório Sincronizado de Ordens de Serviço**')
+    colunas_exibir = [c for c in df_filtrado.columns if c not in ['Data_Abertura_dt', 'Dias_Aberta', 'Tempo_Num']]
+    st.dataframe(df_filtrado[colunas_exibir], use_container_width=True)
 
 # ==========================================
 # ABA 3: CENTRO DE DIAGNÓSTICO AVANÇADO (BOTÃO DE LINK NATIVO)
