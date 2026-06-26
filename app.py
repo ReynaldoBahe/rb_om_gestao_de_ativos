@@ -21,7 +21,7 @@ st.markdown("---")
 
 # 4. Renderização Segura do Visualizador 3D via Link de Incorporação Estável
 # Link oficial do seu modelo Revit do Resort
-link_modelo_autodesk = "https://autodesk.com"
+link_modelo_autodesk = "https://viewer.autodesk.com/id/dXJuOmFkc2sub2JqZWN0czpvcy5vYmplY3Q6YTM2MHZpZXdlci1wcm90ZWN0ZWQvdDE3ODE1Nzk3NDNfOGI0ZGU3MzMtNmU1Ny00Y2IwLWIyMzQtMWYzNzYyYjkwMTY5LnJ2dA?sheetId=YjlmYmFlYzYtN2VjOC1kZWIzLWRkZDEtMmIyNzA5ZWU0YWZl"
 
 try:
     # Renderiza o visualizador com suporte nativo a WebGL e controles de órbita
