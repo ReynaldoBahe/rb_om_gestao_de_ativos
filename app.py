@@ -43,7 +43,7 @@ st.markdown("---")
 # 4. Renderização do Visualizador 3D da Autodesk
 access_token = obter_token_autodesk(CLIENT_ID, CLIENT_SECRET)
 
-if access_token and URN_MODELO != "dXJuOmFmY2...":
+if access_token and URN_MODELO:
     autodesk_html = f"""
     <div id="forgeViewer" style="width: 100%; height: 500px; background-color: #f8f9fa; border-radius: 10px; border: 1px solid #dee2e6;"></div>
     <link rel="stylesheet" href="https://autodesk.com" type="text/css">
