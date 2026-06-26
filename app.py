@@ -37,7 +37,7 @@ st.sidebar.write("---")
 arquivo_upload = st.sidebar.file_uploader("📂 Carregar Planilha de Ativos/OM", type=["csv", "xlsx"])
 
 # URL base do Speckle em modo embed limpo
-speckle_base_url = "https://speckle.systems"
+speckle_base_url = "https://app.speckle.systems/projects/a649da7292/models/815af390c7?embedToken=fd704d8c9c65c33217812bb9e35c7feb7c8d20314f"
 
 # Lógica de carregamento de dados segura
 df = pd.DataFrame()
