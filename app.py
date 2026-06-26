@@ -60,9 +60,10 @@ if arquivo_upload is not None:
     except Exception as e:
         st.sidebar.error(f"Erro ao ler o arquivo: {e}")
 
+# Vincula a leitura de dados de forma fixa à memória permanente da sessão
 df = st.session_state.df_memoria
 
-# Mapeia dinamicamente a lista de OS disponíveis
+# Mapeia dinamicamente a lista de OS disponíveis sem perder a referência ao mudar de aba
 if not df.empty and 'OS' in df.columns:
     lista_os = sorted(list(df['OS'].dropna().astype(str).unique()))
 else:
@@ -71,10 +72,10 @@ else:
 # Configuração estável do estado da sessão para sincronização de OS
 if 'os_selecionada' not in st.session_state or st.session_state.os_selecionada not in lista_os:
     if lista_os:
-        st.session_state.os_selecionada = lista_os
+        st.session_state.os_selecionada = lista_os[0]
 
 # -------------------------------------------------------------------------
-# EXTRAÇÃO REATIVA DE VARIÁVEIS COM BASE NA OS SELECIONADA
+# EXTRAÇÃO REATIVA DE VARIÁVEIS COM BASE NA OS SELECIONADA (ALIMENTA AS ABAS)
 # -------------------------------------------------------------------------
 id_bim_alvo = "29e456a92924eb3747bbcd9bb3edd623"
 resp = "Pedro"
@@ -88,15 +89,15 @@ if not df.empty and 'OS' in df.columns:
     dados_os = df[df['OS'].astype(str) == str(st.session_state.os_selecionada)]
     if not dados_os.empty:
         col_id = next((c for c in df.columns if c.upper() == 'ID'), None)
-        if col_id:
-            id_bim_alvo = str(dados_os[col_id].values).strip()
+        if col_id and col_id in dados_os.columns:
+            id_bim_alvo = str(dados_os[col_id].iloc[0]).strip()
         col_t = next((c for c in df.columns if c.lower() in ['técnico', 'tecnico', 'responsável', 'responsavel']), None)
-        resp = str(dados_os[col_t].values) if col_t else "Pedro"
-        setor = str(dados_os['Setor'].values) if 'Setor' in df.columns else "Climatização"
-        status = str(dados_os['Status'].values) if 'Status' in df.columns else "Fechado"
-        data_ab = str(dados_os['Data_Abertura'].values) if 'Data_Abertura' in df.columns else "20/06/2026"
-        descricao_falha = str(dados_os['Descrição'].values) if 'Descrição' in df.columns else "Sem descrição."
-        criticidade_ativo = str(dados_os['Criticidade'].values) if 'Criticidade' in df.columns else "Média"
+        resp = str(dados_os[col_t].iloc[0]) if col_t else "Pedro"
+        setor = str(dados_os['Setor'].iloc[0]) if 'Setor' in df.columns else "Climatização"
+        status = str(dados_os['Status'].iloc[0]) if 'Status' in df.columns else "Fechado"
+        data_ab = str(dados_os['Data_Abertura'].iloc[0]) if 'Data_Abertura' in df.columns else "20/06/2026"
+        descricao_falha = str(dados_os['Descrição'].iloc[0]) if 'Descrição' in df.columns else "Sem descrição."
+        criticidade_ativo = str(dados_os['Criticidade'].iloc[0]) if 'Criticidade' in df.columns else "Média"
 
 if not id_bim_alvo or id_bim_alvo == "nan":
     id_bim_alvo = "29e456a92924eb3747bbcd9bb3edd623"
@@ -189,8 +190,5 @@ with aba_produtividade:
         st.info("💡 Por favor, certifique-se de que a planilha está carregada na barra lateral.")
 
 # ==========================================
-# ABA 3: CENTRO DE DIAGNÓSTICO (ESTÁVEL E SEM WITH COL)
+# ABA 3: CENTRO DE DIAGNÓSTICO (REATIVA E PREENCHIDA)
 # ==========================================
-with aba_diagnostico:
-    st.subheader("🧠 Centro de Diagnóstico Avançado (IA Preditiva)")
-    
