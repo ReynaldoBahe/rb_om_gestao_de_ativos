@@ -37,14 +37,14 @@ filtro_tempo = st.sidebar.selectbox("Filtrar por Tempo Aberta:", ["Todos", "Meno
 st.sidebar.write("---")
 st.sidebar.header("🎨 Filtro de Cores no Modelo (BIM)")
 
-# Nome padrão correto e unificado: ativar_visao_cromatica
+# Variável padrão e única: ativar_visao_cromatica
 ativar_visao_cromatica = st.sidebar.toggle("🔴 Ativar Visão Cromática por Ativo Selecionado")
 
 st.sidebar.write("---")
 arquivo_upload = st.sidebar.file_uploader("📂 Carregar Planilha de Ativos/OM", type=["csv", "xlsx"])
 
 # URL base do Speckle em modo embed
-speckle_base_url = "https://app.speckle.systems/projects/a649da7292/models/815af390c7?embedToken=fd704d8c9c65c33217812bb9e35c7feb7c8d20314f"
+speckle_base_url = "https://speckle.systems"
 
 # Lógica de carregamento de dados segura
 df = pd.DataFrame()
@@ -76,7 +76,7 @@ aba_modelo, aba_produtividade, aba_diagnostico = st.tabs([
 ])
 
 # ==========================================
-# ABA 1: MODELO 3D (SPECKLE - TOTALMENTE PURIFICADO)
+# ABA 1: MODELO 3D (SPECKLE DINÂMICO LIMPO)
 # ==========================================
 with aba_modelo:
     st.subheader("Visualizador Operacional de Ativos 3D")
@@ -87,14 +87,14 @@ with aba_modelo:
         if col_id:
             linha_ativo = df[df['OS'] == st.session_state.os_selecionada]
             if not linha_ativo.empty:
-                # O .iloc[0] extrai estritamente a string pura da primeira célula, eliminando o ArrowStringArray
+                # O .iloc[0] extrai o texto do ID puríssimo, sem as marcas de metadados do Pandas/Arrow
                 id_bim_alvo = str(linha_ativo[col_id].iloc[0]).strip()
 
-    # Se não achar na planilha ou der erro, usa o ID padrão do resort para o teste funcionar
+    # Se não achar na planilha, usa o ID padrão do resort para o teste funcionar
     if not id_bim_alvo or id_bim_alvo == "nan" or "Array" in id_bim_alvo:
         id_bim_alvo = "29e456a92924eb3747bbcd9bb3edd623"
 
-    # Verificação corrigida e unificada com 'ativar_visao_cromatica'
+    # Verificação com a variável correta: ativar_visao_cromatica
     if ativar_visao_cromatica and id_bim_alvo:
         url_visualizador = f"{speckle_base_url}&filter=%5B%22{id_bim_alvo}%22%5D"
         st.success(f"🎯 Isolamento Ativo: Focando no componente BIM {id_bim_alvo}")
@@ -190,6 +190,7 @@ with aba_diagnostico:
     with col_dir:
         st.markdown("⚡ **Análise de Engenharia Operacional da IA**")
         
+        # Strings normais de linha única para eliminar erros de sintaxe de aspas triplas
         mensagem_ia = f"**ANÁLISE COMPLEMENTAR:** Ordem identificada como {st.session_state.os_selecionada}. O ativo associado ao ID BIM foi analisado pela malha preditiva e classificado sob o status atual de '{status}'. Recomendação: Seguir plano de calibração padrão de fábrica para o setor de {setor}."
         st.success(mensagem_ia)
         
