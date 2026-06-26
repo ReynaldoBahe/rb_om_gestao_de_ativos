@@ -117,17 +117,41 @@ with aba_modelo:
     st.components.v1.iframe(speckle_base_url, height=600, scrolling=False)
 
 # ==========================================
-# ABA 2: PRODUTIVIDADE E RELATÓRIO
+# ABA 2: PRODUTIVIDADE E RELATÓRIO (COM FILTRO DE TEMPO OPERACIONAL)
 # ==========================================
 with aba_produtividade:
     if not df.empty:
+        # Criamos uma cópia local para os filtros não afetarem as outras abas
         df_filtrado = df.copy()
+        
+        # FILTRO DE TEMPO DE ABERTURA OPERACIONAL SEGURO
+        if 'Data_Abertura' in df_filtrado.columns:
+            try:
+                # Converte a coluna para data de forma isolada nesta aba
+                df_filtrado['Data_Abertura_dt'] = pd.to_datetime(df_filtrado['Data_Abertura'], errors='coerce')
+                # Considera a data atual do sistema (2026) para calcular a diferença de dias
+                data_atual = pd.to_datetime('2026-06-26')
+                df_filtrado['Dias_Aberta'] = (data_atual - df_filtrado['Data_Abertura_dt']).dt.days
+                
+                # Aplica as regras baseadas na seleção da barra lateral cinza
+                if filtro_tempo == "Menos de 24h":
+                    df_filtrado = df_filtrado[df_filtrado['Dias_Aberta'] <= 1]
+                elif filtro_tempo == "Entre 2 e 7 dias":
+                    df_filtrado = df_filtrado[(df_filtrado['Dias_Aberta'] > 1) & (df_filtrado['Dias_Aberta'] <= 7)]
+                elif filtro_tempo == "Mais de 7 dias":
+                    df_filtrado = df_filtrado[df_filtrado['Dias_Aberta'] > 7]
+            except Exception:
+                pass
+
+        # FILTROS ORIGINAIS DE STATUS E CRITICIDADE APROVADOS
         if filtro_status != "Todos" and 'Status' in df_filtrado.columns:
             df_filtrado = df_filtrado[df_filtrado['Status'] == filtro_status]
+        if filtro_criticidade != "Todos" and 'Criticidade' in df_filtrado.columns:
+            df_filtrado = df_filtrado[df_filtrado['Criticidade'] == filtro_criticidade]
             
         st.markdown('<div class="vol-title">📊 Volumetria das Ordens de Serviço</div>', unsafe_allow_html=True)
         col_status_name = next((c for c in df.columns if c.lower() == 'status'), None)
-        status_counts = df[col_status_name].value_counts() if col_status_name else {}
+        status_counts = df_filtrado[col_status_name].value_counts() if col_status_name else {}
         
         v_col1, v_col2, v_col3, v_col4 = st.columns(4)
         with v_col1:
@@ -147,15 +171,19 @@ with aba_produtividade:
         
         st.subheader("Controle de Ordens de Serviço por Técnico")
         col_tecnico = next((c for c in df_filtrado.columns if c.lower() in ['técnico', 'tecnico', 'responsável', 'responsavel', 'técnico responsável']), df_filtrado.columns)
-        df_produtividade = df_filtrado.groupby(col_tecnico).size().reset_index(name='Ordens')
-        df_produtividade.columns = ['Técnico', 'Ordens']
         
-        grafico_altair = alt.Chart(df_produtividade).mark_bar(color='#1f77b4').encode(
-            x=alt.X('Técnico:N', title='Profissional Técnico', sort='-y'),
-            y=alt.Y('Ordens:Q', title='Total de Ordens de Serviço'),
-            tooltip=['Técnico', 'Ordens']
-        ).properties(width='container', height=350)
-        st.altair_chart(grafico_altair, use_container_width=True)
+        if not df_filtrado.empty:
+            df_produtividade = df_filtrado.groupby(col_tecnico).size().reset_index(name='Ordens')
+            df_produtividade.columns = ['Técnico', 'Ordens']
+            
+            grafico_altair = alt.Chart(df_produtividade).mark_bar(color='#1f77b4').encode(
+                x=alt.X('Técnico:N', title='Profissional Técnico', sort='-y'),
+                y=alt.Y('Ordens:Q', title='Total de Ordens de Serviço'),
+                tooltip=['Técnico', 'Ordens']
+            ).properties(width='container', height=350)
+            st.altair_chart(grafico_altair, use_container_width=True)
+        else:
+            st.info("Nenhuma ordem encontrada para a combinação de filtros selecionada.")
         
         st.markdown("---")
         st.markdown('📋 **Relatório Sincronizado de Ordens de Serviço**')
