@@ -37,14 +37,14 @@ filtro_tempo = st.sidebar.selectbox("Filtrar por Tempo Aberta:", ["Todos", "Meno
 st.sidebar.write("---")
 st.sidebar.header("🎨 Filtro de Cores no Modelo (BIM)")
 
-# Variável padrão e única: ativar_visao_cromatica
+# Interruptor de ativação do isolamento no modelo (Nome correto e único)
 ativar_visao_cromatica = st.sidebar.toggle("🔴 Ativar Visão Cromática por Ativo Selecionado")
 
 st.sidebar.write("---")
 arquivo_upload = st.sidebar.file_uploader("📂 Carregar Planilha de Ativos/OM", type=["csv", "xlsx"])
 
 # URL base do Speckle em modo embed
-speckle_base_url = "https://speckle.systems"
+speckle_base_url = "https://app.speckle.systems/projects/a649da7292/models/815af390c7?embedToken=fd704d8c9c65c33217812bb9e35c7feb7c8d20314f"
 
 # Lógica de carregamento de dados segura
 df = pd.DataFrame()
@@ -66,7 +66,7 @@ else:
 # 4. CONFIGURAÇÃO DO ESTADO DA SESSÃO (SESSION STATE)
 if 'os_selecionada' not in st.session_state or st.session_state.os_selecionada not in lista_os:
     if lista_os:
-        st.session_state.os_selecionada = lista_os[0]
+        st.session_state.os_selecionada = lista_os
 
 # 5. CRIAÇÃO DAS ABAS (OS 3 MÓDULOS)
 aba_modelo, aba_produtividade, aba_diagnostico = st.tabs([
@@ -87,14 +87,14 @@ with aba_modelo:
         if col_id:
             linha_ativo = df[df['OS'] == st.session_state.os_selecionada]
             if not linha_ativo.empty:
-                # O .iloc[0] extrai o texto do ID puríssimo, sem as marcas de metadados do Pandas/Arrow
-                id_bim_alvo = str(linha_ativo[col_id].iloc[0]).strip()
+                # O .values extrai a string pura diretamente da tabela
+                id_bim_alvo = str(linha_ativo[col_id].values).strip()
 
-    # Se não achar na planilha, usa o ID padrão do resort para o teste funcionar
+    # Se não achar na planilha ou der erro, usa o ID padrão do resort para o teste funcionar
     if not id_bim_alvo or id_bim_alvo == "nan" or "Array" in id_bim_alvo:
         id_bim_alvo = "29e456a92924eb3747bbcd9bb3edd623"
 
-    # Verificação com a variável correta: ativar_visao_cromatica
+    # Verificação unificada com a variável 'ativar_visao_cromatica'
     if ativar_visao_cromatica and id_bim_alvo:
         url_visualizador = f"{speckle_base_url}&filter=%5B%22{id_bim_alvo}%22%5D"
         st.success(f"🎯 Isolamento Ativo: Focando no componente BIM {id_bim_alvo}")
@@ -172,10 +172,10 @@ with aba_diagnostico:
             dados_os = df[df['OS'] == st.session_state.os_selecionada]
             if not dados_os.empty:
                 col_t = next((c for c in df.columns if c.lower() in ['técnico', 'tecnico', 'responsável', 'responsavel']), None)
-                resp = str(dados_os[col_t].iloc[0]) if col_t else "Pedro"
-                setor = str(dados_os['Setor'].iloc[0]) if 'Setor' in df.columns else "Climatização"
-                status = str(dados_os['Status'].iloc[0]) if 'Status' in df.columns else "Fechado"
-                data_ab = str(dados_os['Data_Abertura'].iloc[0]) if 'Data_Abertura' in df.columns else "20/06/2026"
+                resp = str(dados_os[col_t].values) if col_t else "Pedro"
+                setor = str(dados_os['Setor'].values) if 'Setor' in df.columns else "Climatização"
+                status = str(dados_os['Status'].values) if 'Status' in df.columns else "Fechado"
+                data_ab = str(dados_os['Data_Abertura'].values) if 'Data_Abertura' in df.columns else "20/06/2026"
 
         html_ficha = '<div class="ficha-tecnica"><h4 style="margin-top:0; color:#1E3A8A;">📋 Ficha Técnica do Ativo</h4><ul>'
         html_ficha += f'<li><b>ID BIM:</b> {id_bim_alvo}</li>'
@@ -190,7 +190,8 @@ with aba_diagnostico:
     with col_dir:
         st.markdown("⚡ **Análise de Engenharia Operacional da IA**")
         
-        # Strings normais de linha única para eliminar erros de sintaxe de aspas triplas
-        mensagem_ia = f"**ANÁLISE COMPLEMENTAR:** Ordem identificada como {st.session_state.os_selecionada}. O ativo associado ao ID BIM foi analisado pela malha preditiva e classificado sob o status atual de '{status}'. Recomendação: Seguir plano de calibração padrão de fábrica para o setor de {setor}."
+        # Substituído por aspas simples lineares para eliminar de vez o erro de compilação da f-string
+        mensagem_ia = f"**ANÁLISE COMPLEMENTAR:** Ordem {st.session_state.os_selecionada}. Ativo BIM analisado sob status '{status}'. Plano recomendado para {setor}."
         st.success(mensagem_ia)
         
+        df_ia = pd.DataFrame({'Métrica': ['Ordens Analisadas'], 'Valor': [1.0]})
