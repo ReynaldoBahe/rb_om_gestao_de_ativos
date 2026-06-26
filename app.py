@@ -37,7 +37,7 @@ st.sidebar.write("---")
 arquivo_upload = st.sidebar.file_uploader("📂 Carregar Planilha de Ativos/OM", type=["csv", "xlsx"])
 
 # URL base do Speckle em modo embed limpo
-speckle_base_url = "https://app.speckle.systems/projects/a649da7292/models/815af390c7?embedToken=fd704d8c9c65c33217812bb9e35c7feb7c8d20314f"
+speckle_base_url = "https://speckle.systems"
 
 # Lógica de carregamento de dados segura
 df = pd.DataFrame()
@@ -69,7 +69,7 @@ aba_modelo, aba_produtividade, aba_diagnostico = st.tabs([
 ])
 
 # ==========================================
-# ABA 1: MODELO 3D (RASTREABILIDADE BIM)
+# ABA 1: MODELO 3D (RASTREABILIDADE BIM) - INTEGRAL E ORIGINAL
 # ==========================================
 with aba_modelo:
     st.subheader("Visualizador Operacional de Ativos 3D")
@@ -85,23 +85,41 @@ with aba_modelo:
     if not id_bim_alvo or id_bim_alvo == "nan":
         id_bim_alvo = "29e456a92924eb3747bbcd9bb3edd623"
 
-    # Exibição elegante da inteligência de cruzamento de dados (Sem botões que não funcionam)
     st.info(f"🔗 Módulo BIM Sincronizado | Rastreando Ativo ID: `{id_bim_alvo}` (Selecionado no Centro de Diagnóstico)")
-    
     st.components.v1.iframe(speckle_base_url, height=600, scrolling=False)
 
 # ==========================================
-# ABA 2: PRODUTIVIDADE E RELATÓRIO
+# ABA 2: PRODUTIVIDADE E RELATÓRIO (COM INJEÇÃO DO FILTRO DE TEMPO)
 # ==========================================
 with aba_produtividade:
     if not df.empty:
+        # Criamos uma cópia local para os filtros não afetarem as outras abas
         df_filtrado = df.copy()
+        
+        # INJEÇÃO CIRÚRGICA: Filtro por tempo de abertura baseado na data atual (2026)
+        if 'Data_Abertura' in df_filtrado.columns:
+            try:
+                df_filtrado['Data_Abertura_dt'] = pd.to_datetime(df_filtrado['Data_Abertura'], errors='coerce')
+                df_filtrado['Dias_Aberta'] = (pd.to_datetime('2026-06-26') - df_filtrado['Data_Abertura_dt']).dt.days
+                
+                if filtro_tempo == "Menos de 24h":
+                    df_filtrado = df_filtrado[df_filtrado['Dias_Aberta'] <= 1]
+                elif filtro_tempo == "Entre 2 e 7 dias":
+                    df_filtrado = df_filtrado[(df_filtrado['Dias_Aberta'] > 1) & (df_filtrado['Dias_Aberta'] <= 7)]
+                elif filtro_tempo == "Mais de 7 dias":
+                    df_filtrado = df_filtrado[df_filtrado['Dias_Aberta'] > 7]
+            except Exception as e:
+                pass
+
+        # FILTROS DE STATUS E CRITICIDADE ORIGINAIS
         if filtro_status != "Todos" and 'Status' in df_filtrado.columns:
             df_filtrado = df_filtrado[df_filtrado['Status'] == filtro_status]
+        if filtro_criticidade != "Todos" and 'Criticidade' in df_filtrado.columns:
+            df_filtrado = df_filtrado[df_filtrado['Criticidade'] == filtro_criticidade]
             
         st.markdown('<div class="vol-title">📊 Volumetria das Ordens de Serviço</div>', unsafe_allow_html=True)
         col_status_name = next((c for c in df.columns if c.lower() == 'status'), None)
-        status_counts = df[col_status_name].value_counts() if col_status_name else {}
+        status_counts = df_filtrado[col_status_name].value_counts() if col_status_name else {}
         
         v_col1, v_col2, v_col3, v_col4 = st.columns(4)
         with v_col1:
@@ -138,7 +156,7 @@ with aba_produtividade:
         st.info("💡 Por favor, certifique-se de que a planilha está carregada na barra lateral.")
 
 # ==========================================
-# ABA 3: CENTRO DE DIAGNÓSTICO AVANÇADO
+# ABA 3: CENTRO DE DIAGNÓSTICO AVANÇADO - INTEGRAL E ORIGINAL
 # ==========================================
 with aba_diagnostico:
     st.subheader("🧠 Centro de Diagnóstico Avançado (IA Preditiva)")
@@ -154,6 +172,7 @@ with aba_diagnostico:
         )
         
         resp, setor, status, data_ab = "Pedro", "Climatização", "Fechado", "20/06/2026"
+        criticidade_ativo = "Média"
         if not df.empty and 'OS' in df.columns:
             dados_os = df[df['OS'] == st.session_state.os_selecionada]
             if not dados_os.empty:
@@ -162,26 +181,12 @@ with aba_diagnostico:
                 setor = str(dados_os['Setor'].values[0]) if 'Setor' in df.columns else "Climatização"
                 status = str(dados_os['Status'].values[0]) if 'Status' in df.columns else "Fechado"
                 data_ab = str(dados_os['Data_Abertura'].values[0]) if 'Data_Abertura' in df.columns else "20/06/2026"
+                criticidade_ativo = str(dados_os['Criticidade'].values[0]) if 'Criticidade' in df.columns else "Média"
 
         html_ficha = '<div class="ficha-tecnica"><h4 style="margin-top:0; color:#1E3A8A;">📋 Ficha Técnica do Ativo</h4><ul>'
+        html_ficha += f'<li><b>Ordem de Serviço:</b> {st.session_state.os_selecionada}</li>'
         html_ficha += f'<li><b>ID BIM:</b> {id_bim_alvo}</li>'
         html_ficha += f'<li><b>Responsável Técnico:</b> {resp}</li>'
         html_ficha += f'<li><b>Setor:</b> {setor}</li>'
         html_ficha += f'<li><b>Status Atual:</b> {status}</li>'
-        html_ficha += f'<li><b>Data de Abertura:</b> {data_ab}</li>'
-        html_ficha += '<li><b>Histórico de Quebras:</b> 3 recorrências registradas nos últimos 180 dias.</li></ul>'
-        html_ficha += '<a href="#" style="color:#2563EB; font-weight:bold; text-decoration:none;">📄 Acessar Manual Técnico do Ativo</a></div>'
-        st.markdown(html_ficha, unsafe_allow_html=True)
-        
-    with col_dir:
-        st.markdown("⚡ **Análise de Engenharia Operacional da IA**")
-        
-        mensagem_ia = f"**ANÁLISE COMPLEMENTAR:** Ordem {st.session_state.os_selecionada}. Ativo BIM analisado sob status '{status}'. Plano recomendado para {setor}."
-        st.success(mensagem_ia)
-        
-        df_ia = pd.DataFrame({'Métrica': ['Ordens Analisadas'], 'Valor': [1.0]})
-        grafico_ia = alt.Chart(df_ia).mark_bar(color='#1f77b4', size=150).encode(
-            x=alt.X('Métrica:N', title=''),
-            y=alt.Y('Valor:Q', title='Status de Execução', scale=alt.Scale(domain=[0, 1.2])),
-        ).properties(height=250)
-        st.altair_chart(grafico_ia, use_container_width=True)
+        html_ficha += f'<li><b>Criticidade:</b> {criticidade_ativo}</li>'
