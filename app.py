@@ -136,52 +136,70 @@ with aba_produtividade:
         st.dataframe(df_filtrado, use_container_width=True)
     else:
         st.info("💡 Por favor, certifique-se de que a planilha está carregada na barra lateral.")
+# ==========================================
+# 3. BARRA LATERAL E TRATAMENTO SEGURO DE DADOS
+# ==========================================
+# [Mantenha seus selectboxes de filtros da barra lateral aqui...]
 
-# ==========================================
-# ABA 3: CENTRO DE DIAGNÓSTICO AVANÇADO
-# ==========================================
-with aba_diagnostico:
-    st.subheader("🧠 Centro de Diagnóstico Avançado (IA Preditiva)")
-    col_esq, col_dir = st.columns(2)
+# Lógica de carregamento de dados segura e inteligente
+df = pd.DataFrame()
+if arquivo_upload is not None:
+    try:
+        if arquivo_upload.name.endswith('.csv'):
+            df = pd.read_csv(arquivo_upload)
+        else:
+            df = pd.read_excel(arquivo_upload)
+        st.sidebar.success("📊 Planilha processada com sucesso!")
+    except Exception as e:
+        st.error(f"Erro ao ler o arquivo: {e}")
+
+# -------------------------------------------------------------------------
+# MOTOR DE IDENTIFICAÇÃO DINÂMICA DE COLUNAS (FLEXIBILIDADE DE ENGENHARIA)
+# -------------------------------------------------------------------------
+# Dicionário global para armazenar os nomes reais das colunas da planilha
+mapeamento_colunas = {
+    "OS": "OS",
+    "ID": "ID",
+    "Status": "Status",
+    "Criticidade": "Criticidade",
+    "Setor": "Setor",
+    "Tecnico": "Técnico"
+}
+
+if not df.empty:
+    # Varre as colunas reais do arquivo para encontrar correspondências ignorando maiúsculas/acentos
+    colunas_reais = list(df.columns)
     
-    with col_esq:
-        st.markdown("🔎 **Seleção de Ativo para Auditoria**")
-        
-        st.session_state.os_selecionada = st.selectbox(
-            "Selecione a OS para análise da IA:", 
-            lista_os, 
-            index=lista_os.index(st.session_state.os_selecionada) if st.session_state.os_selecionada in lista_os else 0
-        )
-        
-        resp, setor, status, data_ab = "Pedro", "Climatização", "Fechado", "20/06/2026"
-        if not df.empty and 'OS' in df.columns:
-            dados_os = df[df['OS'] == st.session_state.os_selecionada]
-            if not dados_os.empty:
-                col_t = next((c for c in df.columns if c.lower() in ['técnico', 'tecnico', 'responsável', 'responsavel']), None)
-                resp = str(dados_os[col_t].values[0]) if col_t else "Pedro"
-                setor = str(dados_os['Setor'].values[0]) if 'Setor' in df.columns else "Climatização"
-                status = str(dados_os['Status'].values[0]) if 'Status' in df.columns else "Fechado"
-                data_ab = str(dados_os['Data_Abertura'].values[0]) if 'Data_Abertura' in df.columns else "20/06/2026"
+    for col in colunas_reais:
+        c_upper = col.upper().strip()
+        if c_upper in ["OS", "ORDEM DE SERVIÇO", "NUMERO_OS"]:
+            mapeamento_colunas["OS"] = col
+        elif c_upper in ["ID", "ID BIM", "ID_BIM", "ELEMENTID", "CODIGO"]:
+            mapeamento_colunas["ID"] = col
+        elif c_upper in ["STATUS", "SITUACAO", "SITUAÇÃO"]:
+            mapeamento_colunas["Status"] = col
+        elif c_upper in ["CRITICIDADE", "GRAVIDADE", "RISCO"]:
+            mapeamento_colunas["Criticidade"] = col
+        elif c_upper in ["SETOR", "SUBSISTEMA", "DISCIPLINA", "AREA", "ÁREA"]:
+            mapeamento_colunas["Setor"] = col
+        elif c_upper in ["TÉCNICO", "TECNICO", "RESPONSÁVEL", "RESPONSAVEL", "OPERADOR"]:
+            mapeamento_colunas["Tecnico"] = col
 
-        html_ficha = '<div class="ficha-tecnica"><h4 style="margin-top:0; color:#1E3A8A;">📋 Ficha Técnica do Ativo</h4><ul>'
-        html_ficha += f'<li><b>ID BIM:</b> {id_bim_alvo}</li>'
-        html_ficha += f'<li><b>Responsável Técnico:</b> {resp}</li>'
-        html_ficha += f'<li><b>Setor:</b> {setor}</li>'
-        html_ficha += f'<li><b>Status Atual:</b> {status}</li>'
-        html_ficha += f'<li><b>Data de Abertura:</b> {data_ab}</li>'
-        html_ficha += '<li><b>Histórico de Quebras:</b> 3 recorrências registradas nos últimos 180 dias.</li></ul>'
-        html_ficha += '<a href="#" style="color:#2563EB; font-weight:bold; text-decoration:none;">📄 Acessar Manual Técnico do Ativo</a></div>'
-        st.markdown(html_ficha, unsafe_allow_html=True)
-        
-    with col_dir:
-        st.markdown("⚡ **Análise de Engenharia Operacional da IA**")
-        
-        mensagem_ia = f"**ANÁLISE COMPLEMENTAR:** Ordem {st.session_state.os_selecionada}. Ativo BIM analisado sob status '{status}'. Plano recomendado para {setor}."
-        st.success(mensagem_ia)
-        
-        df_ia = pd.DataFrame({'Métrica': ['Ordens Analisadas'], 'Valor': [1.0]})
-        grafico_ia = alt.Chart(df_ia).mark_bar(color='#1f77b4', size=150).encode(
-            x=alt.X('Métrica:N', title=''),
-            y=alt.Y('Valor:Q', title='Status de Execução', scale=alt.Scale(domain=[0, 1.2])),
-        ).properties(height=250)
-        st.altair_chart(grafico_ia, use_container_width=True)
+# Mapeia dinamicamente a lista de OS disponíveis com base na coluna identificada
+if not df.empty and mapeamento_colunas["OS"] in df.columns:
+    lista_os = sorted(list(df[mapeamento_colunas["OS"]].dropna().unique()))
+else:
+    # Fallback caso não haja arquivo carregado
+    lista_os = ["OS-2026-001", "OS-2026-002", "OS-2026-003"]
+
+# 4. CONFIGURAÇÃO DO ESTADO DA SESSÃO (SESSION STATE)
+if 'os_selecionada' not in st.session_state or st.session_state.os_selecionada not in lista_os:
+    if lista_os:
+        st.session_state.os_selecionada = lista_os[0]
+
+# 5. CRIAÇÃO DAS ABAS (OS 3 MÓDULOS)
+aba_modelo, aba_produtividade, aba_diagnostico = st.tabs([
+    "📦 Modelo 3D (Speckle)", 
+    "📊 Produtividade da Equipe", 
+    "🧠 Centro de Diagnóstico (IA)"
+])
