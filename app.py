@@ -74,6 +74,7 @@ aba_modelo, aba_produtividade, aba_diagnostico = st.tabs([
 with aba_modelo:
     st.subheader("Visualizador Operacional de Ativos 3D")
     
+    # 1. Recupera o ID do Ativo correspondente à OS selecionada
     id_bim_alvo = ""
     if not df.empty and 'OS' in df.columns:
         col_id = next((c for c in df.columns if c.upper() == 'ID'), None)
@@ -85,10 +86,26 @@ with aba_modelo:
     if not id_bim_alvo or id_bim_alvo == "nan":
         id_bim_alvo = "29e456a92924eb3747bbcd9bb3edd623"
 
-    # Exibição elegante da inteligência de cruzamento de dados (Sem botões que não funcionam)
+    # Exibição elegante da inteligência de cruzamento de dados
     st.info(f"🔗 Módulo BIM Sincronizado | Rastreando Ativo ID: `{id_bim_alvo}` (Selecionado no Centro de Diagnóstico)")
     
-    st.components.v1.iframe(speckle_base_url, height=600, scrolling=False)
+    # 2. CONSTRUÇÃO DA URL DINÂMICA COM REGRAS DE FILTRAGEM
+    speckle_url_interativa = speckle_base_url
+    
+    # Regra 1: Filtragem por Status da Barra Lateral (Isola os objetos no canvas)
+    if filtro_status != "Todos":
+        speckle_url_interativa += f'&filter=[{{"property":"status","operator":"=","value":"{filtro_status}"}}]'
+    
+    # Regra 2: Realce por Criticidade da Barra Lateral (Aplica mapeamento de cores)
+    if filtro_criticidade != "Todos":
+        speckle_url_interativa += f'&cby=criticidade'
+    
+    # Regra 3: Foca e destaca a câmera do visualizador diretamente no ativo em auditoria
+    if id_bim_alvo:
+        speckle_url_interativa += f'&overlayObjIds={id_bim_alvo}'
+    
+    # 3. Renderiza o visualizador com a URL interativa criada
+    st.components.v1.iframe(speckle_url_interativa, height=600, scrolling=False)
 
 # ==========================================
 # ABA 2: PRODUTIVIDADE E RELATÓRIO
