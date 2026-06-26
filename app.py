@@ -65,7 +65,7 @@ else:
 # Configuração estável do estado da sessão
 if 'os_selecionada' not in st.session_state or st.session_state.os_selecionada not in lista_os:
     if lista_os:
-        st.session_state.os_selecionada = lista_os
+        st.session_state.os_selecionada = lista_os[0]
 
 # ==========================================
 # 5. CRIAÇÃO DAS ABAS (MÓDULOS DO PORTAL)
@@ -76,9 +76,9 @@ aba_modelo, aba_produtividade, aba_diagnostico = st.tabs([
     "🧠 Centro de Diagnóstico (IA)"
 ])
 
-# Cálculo seguro do ID BIM Alvo para todas as abas
+# Cálculo global e seguro do ID BIM Alvo para todas as abas
 id_bim_alvo = ""
-if not df.empty and 'ID' in df.columns:
+if not df.empty and 'OS' in df.columns:
     col_id = next((c for c in df.columns if c.upper() == 'ID'), None)
     if col_id:
         linha_ativo = df[df['OS'].astype(str) == str(st.session_state.os_selecionada)]
@@ -186,12 +186,10 @@ with aba_diagnostico:
                 descricao_falha = str(dados_os['Descrição'].values[0]) if 'Descrição' in df.columns else "Sem descrição."
                 criticidade_ativo = str(dados_os['Criticidade'].values[0]) if 'Criticidade' in df.columns else "Média"
 
-        html_ficha = f"""
-        <div class="ficha-tecnica">
-            <h4 style="margin-top:0; color:#1E3A8A;">📋 Ficha Técnica do Ativo</h4>
-            <ul>
-                <li><b>Ordem de Serviço:</b> {st.session_state.os_selecionada}</li>
-                <li><b>ID BIM:</b> {id_bim_alvo}</li>
-                <li><b>Responsável Técnico:</b> {resp}</li>
-                <li><b>Setor / Subsistema:</b> {setor}</li>
-                <li><b>Status Atual:</b> {status}</li>
+        # Escrita em string contínua e segura (Elimina o erro de f-string unterminated)
+        html_ficha = "<div class='ficha-tecnica'>"
+        html_ficha += "<h4 style='margin-top:0; color:#1E3A8A;'>📋 Ficha Técnica do Ativo</h4>"
+        html_ficha += "<ul>"
+        html_ficha += f"<li><b>Ordem de Serviço:</b> {st.session_state.os_selecionada}</li>"
+        html_ficha += f"<li><b>ID BIM:</b> {id_bim_alvo}</li>"
+        html_ficha += f"<li><b>Responsável Técnico:</b> {resp}</li>"
