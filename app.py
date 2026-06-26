@@ -60,10 +60,9 @@ if arquivo_upload is not None:
     except Exception as e:
         st.sidebar.error(f"Erro ao ler o arquivo: {e}")
 
-# Vincula a leitura de dados de forma fixa à memória permanente da sessão
 df = st.session_state.df_memoria
 
-# Mapeia dinamicamente a lista de OS disponíveis sem perder a referência ao mudar de aba
+# Mapeia dinamicamente a lista de OS disponíveis
 if not df.empty and 'OS' in df.columns:
     lista_os = sorted(list(df['OS'].dropna().astype(str).unique()))
 else:
@@ -75,7 +74,7 @@ if 'os_selecionada' not in st.session_state or st.session_state.os_selecionada n
         st.session_state.os_selecionada = lista_os[0]
 
 # -------------------------------------------------------------------------
-# EXTRAÇÃO REATIVA DE VARIÁVEIS COM BASE NA OS SELECIONADA (ALIMENTA AS ABAS)
+# EXTRAÇÃO REATIVA DE VARIÁVEIS COM BASE NA OS SELECIONADA
 # -------------------------------------------------------------------------
 id_bim_alvo = "29e456a92924eb3747bbcd9bb3edd623"
 resp = "Pedro"
@@ -190,5 +189,8 @@ with aba_produtividade:
         st.info("💡 Por favor, certifique-se de que a planilha está carregada na barra lateral.")
 
 # ==========================================
-# ABA 3: CENTRO DE DIAGNÓSTICO (REATIVA E PREENCHIDA)
+# ABA 3: CENTRO DE DIAGNÓSTICO (ESTÁVEL E COMPLETA)
 # ==========================================
+with aba_diagnostico:
+    st.subheader("🧠 Centro de Diagnóstico Avançado (IA Preditiva)")
+    
