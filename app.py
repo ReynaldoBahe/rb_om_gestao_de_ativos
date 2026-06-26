@@ -70,7 +70,7 @@ if access_token and URN_MODELO:
         }});
     </script>
     """
-    components.html(autodesk_html, height=520)
+        components.html(autodesk_html, height=520)
 else:
     st.info("💡 Insira o Client ID, Client Secret e a URN correta no código para ativar o modelo 3D do Resort.")
 
