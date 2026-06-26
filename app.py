@@ -82,8 +82,7 @@ aba_modelo, aba_produtividade, aba_diagnostico = st.tabs([
 # ABA 1: MODELO 3D (FAIXA CINZA LIMPA COM CSS SEGURO)
 # ==========================================
 with aba_modelo:
-    # Esta regra esconde apenas os widgets de dentro da barra lateral,
-    # mantendo o tamanho e a estrutura original do menu cinza intactos na tela.
+    # Esta regra oculta apenas os elementos internos do painel, preservando a faixa cinza lateral
     st.markdown("""
         <style>
         [data-testid="stSidebar"] [data-testid="stWidgetFormModifier"],
@@ -110,7 +109,6 @@ with aba_modelo:
         id_bim_alvo = "29e456a92924eb3747bbcd9bb3edd623"
 
     st.info(f"🔗 Módulo BIM Sincronizado | Rastreando Ativo ID: `{id_bim_alvo}` (Selecione outra OS na aba Centro de Diagnóstico para focar)")
-    
     st.components.v1.iframe(speckle_base_url, height=600, scrolling=False)
 
 # ==========================================
@@ -170,7 +168,6 @@ with aba_diagnostico:
     with col_esq:
         st.markdown("🔎 **Seleção de Ativo para Auditoria**")
         
-        # Parêntese devidamente fechado aqui para eliminar o SyntaxError
         st.session_state.os_selecionada = st.selectbox(
             "Selecione a OS para análise da IA:", 
             lista_os, 
@@ -198,3 +195,5 @@ with aba_diagnostico:
         st.markdown(html_ficha, unsafe_allow_html=True)
         
     with col_dir:
+        st.markdown("⚡ **Análise de Engenharia Operacional da IA**")
+        
