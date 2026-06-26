@@ -78,6 +78,9 @@ aba_modelo, aba_produtividade, aba_diagnostico = st.tabs([
 # ==========================================
 # ABA 1: MODELO 3D (SPECKLE DINÂMICO)
 # ==========================================
+# ==========================================
+# ABA 1: MODELO 3D (SPECKLE DINÂMICO)
+# ==========================================
 with aba_modelo:
     st.subheader("Visualizador Operacional de Ativos 3D")
     
@@ -88,21 +91,23 @@ with aba_modelo:
         if col_id:
             linha_ativo = df[df['OS'] == st.session_state.os_selecionada]
             if not linha_ativo.empty:
-                # Pegando o primeiro elemento [0] para enviar a string limpa sem colchetes
+                # Pega o primeiro valor de forma limpa
                 id_bim_alvo = str(linha_ativo[col_id].values[0]).strip()
 
     # Se não achar na planilha, usa o ID padrão para fins de demonstração
     if not id_bim_alvo or id_bim_alvo == "nan":
         id_bim_alvo = "29e456a92924eb3747bbcd9bb3edd623"
 
-    # Verificação com a variável corrigida: ativar_visao_cromatica
+    # Código otimizado: apenas filtra e isola o ativo de forma super leve
     if ativar_visao_cromatica and id_bim_alvo:
-        url_visualizador = f"{speckle_base_url}&filter=%5B%22{id_bim_alvo}%22%5D&overlay=%5B%7B%22id%22%3A%22{id_bim_alvo}%22%2C%22color%22%3A%22%23FF0000%22%7D%5D"
-        st.success(f"🎯 Visão Cromática Ativa: Filtrando e pintando o Ativo BIM {id_bim_alvo}")
+        url_visualizador = f"{speckle_base_url}&filter=%5B%22{id_bim_alvo}%22%5D"
+        st.success(f"🎯 Isolamento de Ativo Ativo: Focando no componente BIM {id_bim_alvo}")
     else:
         url_visualizador = speckle_base_url
         st.markdown("ℹ️ *Visualização padrão do modelo de engenharia.*")
         
+    st.components.v1.iframe(url_visualizador, height=600, scrolling=False)
+
     st.components.v1.iframe(url_visualizador, height=600, scrolling=False)
 
 # ==========================================
