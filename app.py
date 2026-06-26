@@ -37,27 +37,46 @@ st.sidebar.image("https://flaticon.com", width=80)
 st.sidebar.title("Configurações do Painel")
 
 # 🔗 Campo dinâmico para colar o link do Speckle do cliente em tempo real
-link_speckle_padrao = "https://speckle.systems" # Substitua pelo link do seu modelo Speckle principal
-link_cliente = st.sidebar.text_input(
-    "🔗 Link do Visualizador Speckle (Cliente):", 
-    value=link_speckle_padrao,
-    help="Cole aqui o link de incorporação (Embed) gerado na conta do Speckle do seu cliente."
-)
+with aba_speckle:
+    st.markdown("### Modelo Renderizado via Speckle")
+    if link_cliente:
+        try:
+            components.iframe(link_cliente, height=550, scrolling=False)
+        except Exception as e:
+            st.error(f"Erro ao carregar o visualizador Speckle: {e}")
+    else:
+        st.info("💡 Insira o link do Speckle do cliente na barra lateral para ativar o modelo 3D.")
 
-st.sidebar.markdown("---")
-st.sidebar.subheader("Filtros Operacionais")
-uploaded_file = st.sidebar.file_uploader("📂 Carregar Planilha de Ativos/OM", type=["csv", "xlsx"])
-
-setor_selecionado = st.sidebar.selectbox("Filtrar por Setor:", ["Todos", "Elétrica", "Mecânica", "Hidráulica", "Climatização"])
-status_selecionado = st.sidebar.selectbox("Filtrar por Status:", ["Todos", "Aberto", "Fechado", "Em Andamento"])
-criticidade_selecionada = st.sidebar.selectbox("Filtrar por Criticidade:", ["Todos", "Alta", "Média", "Baixa"])
-
-# 3. Cabeçalho Principal do Painel
-st.title("🏗️ Visualizador Operacional de Ativos 3D (Speckle)")
-st.markdown("---")
-
-# ✨ 4. CRIAÇÃO DAS ABAS DE COMPARATIVO
-aba_speckle, aba_autodesk = st.tabs(["🌐 Visualizador Speckle", "📐 Visualizador Autodesk Viewer (APS)"])
+with aba_autodesk:
+    st.markdown("### Modelo Renderizado via Autodesk APS (Nativo)")
+    access_token = obter_token_autodesk(CLIENT_ID, CLIENT_SECRET)
+    
+    if access_token and URN_MODELO:
+        autodesk_html = f"""
+        <div id="forgeViewer" style="width: 100%; height: 500px; background-color: #f8f9fa; border-radius: 10px; border: 1px solid #dee2e6;"></div>
+        <link rel="stylesheet" href="https://autodesk.com" type="text/css">
+        <script src="https://autodesk.com"></script>
+        <script>
+            var viewer;
+            var options = {{
+                env: 'AutodeskProduction2', api: 'streamingV2',
+                getAccessToken: function(onTokenReady) {{ onTokenReady("{access_token}", 3600); }}
+            }};
+            Autodesk.Viewing.Initializer(options, function() {{
+                var htmlDiv = document.getElementById('forgeViewer');
+                viewer = new Autodesk.Viewing.GuiViewer3D(htmlDiv);
+                viewer.start();
+                var documentId = 'urn:{URN_MODELO}';
+                Autodesk.Viewing.Document.load(documentId, function(doc) {{
+                    var viewables = doc.getRoot().getDefaultGeometry();
+                    viewer.loadDocumentNode(doc, viewables);
+                }}, null);
+            }});
+        </script>
+        """
+        components.html(autodesk_html, height=520)
+    else:
+        st.error("❌ Falha na geração do token. Verifique as credenciais da Autodesk no topo do arquivo.")
 
 with aba_speckle:
     st.markdown("### Modelo Renderizado via Speckle")
