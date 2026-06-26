@@ -44,7 +44,8 @@ st.sidebar.header("Filtros Operacionais")
 # Carregador de arquivos oficial na barra lateral
 arquivo_upload = st.sidebar.file_uploader("📂 Carregar Planilha de Ativos/OM", type=["csv", "xlsx"])
 
-# Lógica de carregamento de dados (Real vs Simulada)
+# Lógica de carregamento de dados segura (Sem dicionários simulados que possam quebrar)
+df = pd.DataFrame()
 if arquivo_upload is not None:
     try:
         if arquivo_upload.name.endswith('.csv'):
@@ -53,15 +54,6 @@ if arquivo_upload is not None:
             df = pd.read_excel(arquivo_upload)
     except Exception as e:
         st.error(f"Erro ao ler o arquivo: {e}")
-        df = pd.DataFrame()
-else:
-    # Dados fictícios completamente preenchidos (sem erros de sintaxe) para o painel não abrir vazio
-    dados_reserva = {
-        'Técnico': ['Pedro', 'Marcos', 'Tiago', 'Francisco', 'Joaquim', 'Roberto'],
-        'Ordens':,
-        'Status': ['Concluído', 'Concluído', 'Em Andamento', 'Concluído', 'Concluído', 'Em Andamento']
-    }
-    df = pd.DataFrame(dados_reserva)
 
 # 4. CRIAÇÃO DAS ABAS
 aba_modelo, aba_produtividade = st.tabs(["📦 Modelo 3D (Speckle)", "📊 Produtividade da Equipe"])
@@ -73,7 +65,6 @@ with aba_modelo:
     st.subheader("Visualização do Modelo Digital do Resort")
     st.markdown("ℹ️ *Carregamento direto via infraestrutura aberta Speckle. Custo de API: $0.00.*")
     
-    # Utiliza o link inserido na barra lateral de forma dinâmica
     st.components.v1.iframe(speckle_url_input, height=600, scrolling=False)
 
 # ==========================================
@@ -83,11 +74,11 @@ with aba_produtividade:
     st.subheader("Controle de Ordens de Serviço por Técnico")
     
     if not df.empty:
-        # Mapeamento automático de colunas para aceitar diferentes formatos de planilha
+        # Tenta mapear as colunas corretas da sua planilha automaticamente
         col_tecnico = next((c for c in df.columns if c.lower() in ['técnico', 'tecnico', 'responsável', 'responsavel', 'técnico responsável']), df.columns[0])
         col_ordens = next((c for c in df.columns if c.lower() in ['ordens', 'om', 'quantidade', 'total']), None)
         
-        # Se a planilha não tiver uma coluna de contagem pronta, criamos uma contagem por linha
+        # Agrupamento estruturado
         if col_ordens:
             df_produtividade = df.groupby(col_tecnico)[col_ordens].sum().reset_index()
             df_produtividade.columns = ['Técnico', 'Ordens']
@@ -95,7 +86,7 @@ with aba_produtividade:
             df_produtividade = df.groupby(col_tecnico).size().reset_index(name='Ordens')
             df_produtividade.columns = ['Técnico', 'Ordens']
         
-        # Construção do gráfico corrigido usando a biblioteca Altair
+        # Gráfico Altair limpo e seguro
         grafico_altair = alt.Chart(df_produtividade).mark_bar(color='#1f77b4').encode(
             x=alt.X('Técnico:N', title='Profissional Técnico', sort='-y'),
             y=alt.Y('Ordens:Q', title='Total de Ordens de Serviço'),
@@ -107,15 +98,15 @@ with aba_produtividade:
         
         st.altair_chart(grafico_altair, use_container_width=True)
         
-        # Resumo das Métricas
+        # Cards de métricas reais baseados na sua planilha
         st.markdown("---")
         col1, col2, col3 = st.columns(3)
         with col1:
             st.markdown(f'<div class="metric-box"><b>Total de Ordens:</b><br><span style="font-size:24px;">{int(df_produtividade["Ordens"].sum())}</span></div>', unsafe_allow_html=True)
         with col2:
             lider = df_produtividade.loc[df_produtividade["Ordens"].idxmax(), "Técnico"]
-            st.markdown(f'<div class="metric-box"><b>Líder de Produção:</b><br><span style="font-size:24px;">{lider}</span></div>', unsafe_allow_html=True)
+            st.markdown(f'<div class="metric-box"><b>Líder de Production:</b><br><span style="font-size:24px;">{lider}</span></div>', unsafe_allow_html=True)
         with col3:
             st.markdown('<div class="metric-box"><b>Status Ativo:</b><br><span style="font-size:24px;">100% Comercial</span></div>', unsafe_allow_html=True)
     else:
-        st.warning("Carregue uma planilha válida para visualizar os dados de produtividade.")
+        st.info("💡 Por favor, certifique-se de que a planilha está carregada na barra lateral para gerar os gráficos automaticamente.")
