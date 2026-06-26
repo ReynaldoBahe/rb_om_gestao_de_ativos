@@ -80,7 +80,7 @@ st.sidebar.progress(min(float(indice_sla), 1.0))
 
 # Mapeia dinamicamente a lista de OS disponíveis
 if not df.empty and 'OS' in df.columns:
-    lista_os = sorted(list(df['OS'].dropna().astype(str).unique()))
+    lista_os = sorted(list(df['OS'].dropna().unique()))
 else:
     lista_os = ["OS-2026-001", "OS-2026-002", "OS-2026-003"]
 
@@ -106,7 +106,7 @@ with aba_modelo:
     if not df.empty and 'OS' in df.columns:
         col_id = next((c for c in df.columns if c.upper() == 'ID'), None)
         if col_id:
-            linha_ativo = df[df['OS'].astype(str) == str(st.session_state.os_selecionada)]
+            linha_ativo = df[df['OS'] == st.session_state.os_selecionada]
             if not linha_ativo.empty:
                 id_bim_alvo = str(linha_ativo[col_id].values[0]).strip()
 
@@ -181,10 +181,9 @@ with aba_diagnostico:
         
         resp, setor, status, data_ab = "Pedro", "Climatização", "Fechado", "20/06/2026"
         if not df.empty and 'OS' in df.columns:
-            dados_os = df[df['OS'].astype(str) == str(st.session_state.os_selecionada)]
+            dados_os = df[df['OS'] == st.session_state.os_selecionada]
             if not dados_os.empty:
                 col_t = next((c for c in df.columns if c.lower() in ['técnico', 'tecnico', 'responsável', 'responsavel']), None)
-                # O SEGREDO DO SUCESSO: Adicionado [0] para extrair texto puro (string) limpo
                 resp = str(dados_os[col_t].values[0]) if col_t else "Pedro"
                 setor = str(dados_os['Setor'].values[0]) if 'Setor' in df.columns else "Climatização"
                 status = str(dados_os['Status'].values[0]) if 'Status' in df.columns else "Fechado"
@@ -201,3 +200,5 @@ with aba_diagnostico:
         st.markdown(html_ficha, unsafe_allow_html=True)
         
     with col_dir:
+        st.markdown("⚡ **Análise de Engenharia Operacional da IA**")
+        
