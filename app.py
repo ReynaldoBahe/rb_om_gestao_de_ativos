@@ -39,20 +39,24 @@ arquivo_upload = st.sidebar.file_uploader("📂 Carregar Planilha de Ativos/OM",
 # URL base do Speckle em modo embed limpo
 speckle_base_url = "https://speckle.systems"
 
-# Lógica de carregamento de dados segura
-df = pd.DataFrame()
+# Lógica de carregamento de dados segura e persistente em Session State
+if 'df_permanente' not in st.session_state:
+    st.session_state.df_permanente = pd.DataFrame()
+
 if arquivo_upload is not None:
     try:
         if arquivo_upload.name.endswith('.csv'):
-            df = pd.read_csv(arquivo_upload)
+            st.session_state.df_permanente = pd.read_csv(arquivo_upload)
         else:
-            df = pd.read_excel(arquivo_upload)
+            st.session_state.df_permanente = pd.read_excel(arquivo_upload)
     except Exception as e:
         st.error(f"Erro ao ler o arquivo: {e}")
 
+df = st.session_state.df_permanente
+
 # Mapeia dinamicamente a lista de OS disponíveis
 if not df.empty and 'OS' in df.columns:
-    lista_os = sorted(list(df['OS'].dropna().unique()))
+    lista_os = sorted(list(df['OS'].dropna().astype(str).unique()))
 else:
     lista_os = ["OS-2026-001", "OS-2026-002", "OS-2026-003"]
 
@@ -69,7 +73,7 @@ aba_modelo, aba_produtividade, aba_diagnostico = st.tabs([
 ])
 
 # ==========================================
-# ABA 1: MODELO 3D (RASTREABILIDADE BIM) - INTEGRAL E ORIGINAL
+# ABA 1: MODELO 3D (RASTREABILIDADE BIM) - INTEGRAL ORIGINAL
 # ==========================================
 with aba_modelo:
     st.subheader("Visualizador Operacional de Ativos 3D")
@@ -78,7 +82,7 @@ with aba_modelo:
     if not df.empty and 'OS' in df.columns:
         col_id = next((c for c in df.columns if c.upper() == 'ID'), None)
         if col_id:
-            linha_ativo = df[df['OS'] == st.session_state.os_selecionada]
+            linha_ativo = df[df['OS'].astype(str) == str(st.session_state.os_selecionada)]
             if not linha_ativo.empty:
                 id_bim_alvo = str(linha_ativo[col_id].values[0]).strip()
 
@@ -89,29 +93,27 @@ with aba_modelo:
     st.components.v1.iframe(speckle_base_url, height=600, scrolling=False)
 
 # ==========================================
-# ABA 2: PRODUTIVIDADE E RELATÓRIO (COM INJEÇÃO DO FILTRO DE TEMPO)
+# ABA 2: PRODUTIVIDADE E RELATÓRIO (FILTRAGEM DE TEMPO ROBUSTA)
 # ==========================================
 with aba_produtividade:
     if not df.empty:
-        # Criamos uma cópia local para os filtros não afetarem as outras abas
         df_filtrado = df.copy()
         
-        # INJEÇÃO CIRÚRGICA: Filtro por tempo de abertura baseado na data atual (2026)
-        if 'Data_Abertura' in df_filtrado.columns:
+        # FILTRAGEM OPERACIONAL POR TEMPO ABERTA (Comparação de Texto Segura)
+        col_tempo_nome = next((c for c in df_filtrado.columns if 'TEMPO' in c.upper() or 'DIAS' in c.upper()), None)
+        if col_tempo_nome and filtro_tempo != "Todos":
             try:
-                df_filtrado['Data_Abertura_dt'] = pd.to_datetime(df_filtrado['Data_Abertura'], errors='coerce')
-                df_filtrado['Dias_Aberta'] = (pd.to_datetime('2026-06-26') - df_filtrado['Data_Abertura_dt']).dt.days
-                
+                df_filtrado['Tempo_Num'] = pd.to_numeric(df_filtrado[col_tempo_nome], errors='coerce').fillna(0)
                 if filtro_tempo == "Menos de 24h":
-                    df_filtrado = df_filtrado[df_filtrado['Dias_Aberta'] <= 1]
+                    df_filtrado = df_filtrado[df_filtrado['Tempo_Num'] <= 1]
                 elif filtro_tempo == "Entre 2 e 7 dias":
-                    df_filtrado = df_filtrado[(df_filtrado['Dias_Aberta'] > 1) & (df_filtrado['Dias_Aberta'] <= 7)]
+                    df_filtrado = df_filtrado[(df_filtrado['Tempo_Num'] > 1) & (df_filtrado['Tempo_Num'] <= 7)]
                 elif filtro_tempo == "Mais de 7 dias":
-                    df_filtrado = df_filtrado[df_filtrado['Dias_Aberta'] > 7]
-            except Exception as e:
+                    df_filtrado = df_filtrado[df_filtrado['Tempo_Num'] > 7]
+            except Exception:
                 pass
 
-        # FILTROS DE STATUS E CRITICIDADE ORIGINAIS
+        # FILTROS ORIGINAIS DE STATUS E CRITICIDADE APROVADOS
         if filtro_status != "Todos" and 'Status' in df_filtrado.columns:
             df_filtrado = df_filtrado[df_filtrado['Status'] == filtro_status]
         if filtro_criticidade != "Todos" and 'Criticidade' in df_filtrado.columns:
@@ -122,18 +124,14 @@ with aba_produtividade:
         status_counts = df_filtrado[col_status_name].value_counts() if col_status_name else {}
         
         v_col1, v_col2, v_col3, v_col4 = st.columns(4)
-        with v_col1:
-            st.markdown('<div><span class="status-dot dot-aberta"></span>Aberta</div>', unsafe_allow_html=True)
-            st.markdown(f'<div class="vol-number">{int(status_counts.get("Aberta", 0))}</div>', unsafe_allow_html=True)
-        with v_col2:
-            st.markdown('<div><span class="status-dot dot-atendimento"></span>Em Atendimento</div>', unsafe_allow_html=True)
-            st.markdown(f'<div class="vol-number">{int(status_counts.get("Em Andamento", 0))}</div>', unsafe_allow_html=True)
-        with v_col3:
-            st.markdown('<div><span class="status-dot dot-pausada"></span>Pausada</div>', unsafe_allow_html=True)
-            st.markdown(f'<div class="vol-number">{int(status_counts.get("Pausada", 0))}</div>', unsafe_allow_html=True)
-        with v_col4:
-            st.markdown('<div><span class="status-dot dot-fechado"></span>Fechado</div>', unsafe_allow_html=True)
-            st.markdown(f'<div class="vol-number">{int(status_counts.get("Fechado", 0))}</div>', unsafe_allow_html=True)
+        v_col1.markdown('<div><span class="status-dot dot-aberta"></span>Aberta</div>', unsafe_allow_html=True)
+        v_col1.markdown(f'<div class="vol-number">{int(status_counts.get("Aberta", 0))}</div>', unsafe_allow_html=True)
+        v_col2.markdown('<div><span class="status-dot dot-atendimento"></span>Em Atendimento</div>', unsafe_allow_html=True)
+        v_col2.markdown(f'<div class="vol-number">{int(status_counts.get("Em Andamento", 0))}</div>', unsafe_allow_html=True)
+        v_col3.markdown('<div><span class="status-dot dot-pausada"></span>Pausada</div>', unsafe_allow_html=True)
+        v_col3.markdown(f'<div class="vol-number">{int(status_counts.get("Pausada", 0))}</div>', unsafe_allow_html=True)
+        v_col4.markdown('<div><span class="status-dot dot-fechado"></span>Fechado</div>', unsafe_allow_html=True)
+        v_col4.markdown(f'<div class="vol-number">{int(status_counts.get("Fechado", 0))}</div>', unsafe_allow_html=True)
             
         st.markdown("---")
         
@@ -156,7 +154,7 @@ with aba_produtividade:
         st.info("💡 Por favor, certifique-se de que a planilha está carregada na barra lateral.")
 
 # ==========================================
-# ABA 3: CENTRO DE DIAGNÓSTICO AVANÇADO - INTEGRAL E ORIGINAL
+# ABA 3: CENTRO DE DIAGNÓSTICO AVANÇADO (INTEGRAL ORIGINAL CONSOLIDADO)
 # ==========================================
 with aba_diagnostico:
     st.subheader("🧠 Centro de Diagnóstico Avançado (IA Preditiva)")
@@ -174,7 +172,7 @@ with aba_diagnostico:
         resp, setor, status, data_ab = "Pedro", "Climatização", "Fechado", "20/06/2026"
         criticidade_ativo = "Média"
         if not df.empty and 'OS' in df.columns:
-            dados_os = df[df['OS'] == st.session_state.os_selecionada]
+            dados_os = df[df['OS'].astype(str) == str(st.session_state.os_selecionada)]
             if not dados_os.empty:
                 col_t = next((c for c in df.columns if c.lower() in ['técnico', 'tecnico', 'responsável', 'responsavel']), None)
                 resp = str(dados_os[col_t].values[0]) if col_t else "Pedro"
@@ -189,4 +187,3 @@ with aba_diagnostico:
         html_ficha += f'<li><b>Responsável Técnico:</b> {resp}</li>'
         html_ficha += f'<li><b>Setor:</b> {setor}</li>'
         html_ficha += f'<li><b>Status Atual:</b> {status}</li>'
-        html_ficha += f'<li><b>Criticidade:</b> {criticidade_ativo}</li>'
