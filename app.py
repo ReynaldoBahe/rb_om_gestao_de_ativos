@@ -98,7 +98,7 @@ if not id_bim_alvo or id_bim_alvo == "nan":
 # ABA 1: MODELO 3D (MESA DE INSPEÇÃO NA BARRA LATERAL)
 # ==========================================
 with aba_modelo:
-    # 1. Extração segura dos dados da OS selecionada para evitar arrays e NameError
+    # 1. Extração segura e limpa dos dados da OS selecionada (Evita arrays e códigos do Pandas)
     id_bim_alvo_local = "29e456a92924eb3747bbcd9bb3edd623"
     setor_local = "Climatização"
     criticidade_local = "Média"
@@ -108,46 +108,45 @@ with aba_modelo:
         dados_os_local = df[df['OS'].astype(str) == str(st.session_state.os_selecionada)]
         if not dados_os_local.empty:
             col_id = next((c for c in df.columns if c.upper() == 'ID'), None)
-            if col_id:
-                id_bim_alvo_local = str(dados_os_local[col_id].values[0]).strip()
-            setor_local = str(dados_os_local['Setor'].values[0]) if 'Setor' in df.columns else "Climatização"
-            criticidade_local = str(dados_os_local['Criticidade'].values[0]) if 'Criticidade' in df.columns else "Média"
-            descricao_local = str(dados_os_local['Descrição'].values[0]) if 'Descrição' in df.columns else "Sem descrição."
+            if col_id and col_id in df.columns:
+                # O .iloc[0] extrai o valor puro de dentro da célula, eliminando o erro de array
+                id_bim_alvo_local = str(dados_os_local[col_id].iloc[0]).strip()
+            
+            setor_local = str(dados_os_local['Setor'].iloc[0]) if 'Setor' in df.columns else "Climatização"
+            criticidade_local = str(dados_os_local['Criticidade'].iloc[0]) if 'Criticidade' in df.columns else "Média"
+            descricao_local = str(dados_os_local['Descrição'].iloc[0]) if 'Descrição' in df.columns else "Sem descrição."
 
     if not id_bim_alvo_local or id_bim_alvo_local == "nan":
         id_bim_alvo_local = "29e456a92924eb3747bbcd9bb3edd623"
 
-    # 2. INJEÇÃO DE INFORMAÇÕES DE MANUTENÇÃO DIRETO NA FAIXA CINZA LATERAL
-    # O HTML abaixo é inserido no topo da st.sidebar, criando um card limpo sem mexer nas outras abas
-    html_sidebar_inspecao = f"""
+    # 2. INJEÇÃO DE ESTILO CSS (Isolado em string comum, sem f-string para evitar o SyntaxError)
+    css_sidebar_limpa = """
     <style>
-        /* Oculta os filtros padrões do Streamlit enquanto o painel 1 do resort estiver ativo */
+        /* Limpa visualmente os filtros originais apenas na visualização da primeira aba */
         div[data-baseweb="tab-panel"]:nth-of-type(1) ~ div[data-testid="stSidebar"] div.stSelectbox,
         div[data-baseweb="tab-panel"]:nth-of-type(1) ~ div[data-testid="stSidebar"] div.stFileUploader,
-        div[data-baseweb="tab-panel"]:nth-of-type(1) ~ div[data-testid="stSidebar"] hr {{
+        div[data-baseweb="tab-panel"]:nth-of-type(1) ~ div[data-testid="stSidebar"] hr {
             display: none !important;
         }
-        .card-inspecao {{
+        .card-inspecao {
             background-color: #F8FAFC;
             padding: 15px;
-            border-radius: 6px;
+            border-radius: 8px;
             border: 1px solid #E2E8F0;
             margin-top: 10px;
-            font-family: sans-serif;
-        }}
-        .card-inspecao h4 {{ color: #1E3A8A; margin: 0 0 10px 0; font-size: 16px; }}
-        .card-inspecao p {{ margin: 5px 0; font-size: 13px; color: #334155; }}
-        .card-inspecao strong {{ color: #1E293B; }}
+        }
+        .card-inspecao h4 { color: #1E3A8A; margin: 0 0 10px 0; font-size: 16px; font-family: sans-serif; }
+        .card-inspecao p { margin: 6px 0; font-size: 13px; color: #334155; font-family: sans-serif; line-height: 1.4; }
     </style>
     """
-    st.markdown(html_sidebar_inspecao, unsafe_allow_html=True)
+    st.markdown(css_sidebar_limpa, unsafe_allow_html=True)
     
-    # Desenha o painel de texto estritamente dentro do contexto do menu lateral desta aba
+    # 3. RENDERIZAÇÃO DO CONTEÚDO TÉCNICO DENTRO DA BARRA LATERAL DA ABA 1
     st.sidebar.markdown(f"""
     <div class="card-inspecao">
         <h4>🔎 Inspeção Técnica</h4>
-        <p><b>Ordem de Serviço:</b><br>`{st.session_state.os_selecionada}`</p>
-        <p><b>ID do Elemento:</b><br>`{id_bim_alvo_local}`</p>
+        <p><b>Ordem de Serviço:</b><br><code>{st.session_state.os_selecionada}</code></p>
+        <p><b>ID do Elemento:</b><br><code>{id_bim_alvo_local}</code></p>
         <p><b>Subsistema:</b> {setor_local}</p>
         <p><b>Nível de Risco:</b> {criticidade_local}</p>
         <hr style="border:0; border-top:1px solid #E2E8F0; margin:10px 0;">
@@ -155,9 +154,9 @@ with aba_modelo:
     </div>
     """, unsafe_allow_html=True)
 
-    # 3. RENDERIZAÇÃO DO VISUALIZADOR PRINCIPAL DO RESORT
+    # 4. VISUALIZADOR DA MAQUETE DO RESORT
     st.subheader("Visualizador Operacional de Ativos 3D")
-    st.info(f"🔗 Módulo BIM Sincronizado | Foco de Análise: `{id_bim_alvo_local}`")
+    st.info(f"🔗 Módulo BIM Sincronizado | Foco ativo no ID: `{id_bim_alvo_local}`")
     st.components.v1.iframe(speckle_base_url, height=600, scrolling=False)
 
 # ==========================================
