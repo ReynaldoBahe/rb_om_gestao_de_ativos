@@ -15,9 +15,8 @@ URN_MODELO = "dXJuOmFkc2sub2JqZWN0czpvcy5vYmplY3Q6YTM2MHZpZXdlci1wcm90ZWN0ZWQvdD
 # Função cacheaa para obter o Token de Acesso da Autodesk
 @st.cache_data(ttl=3500)
 def obter_token_autodesk(client_id, client_secret):
-    url = "https://viewer.autodesk.com/id/dXJuOmFkc2sub2JqZWN0czpvcy5vYmplY3Q6YTM2MHZpZXdlci1wcm90ZWN0ZWQvdDE3ODE1Nzk3NDNfOGI0ZGU3MzMtNmU1Ny00Y2IwLWIyMzQtMWYzNzYyYjkwMTY5LnJ2dA?sheetId=YjlmYmFlYzYtN2VjOC1kZWIzLWRkZDEtMmIyNzA5ZWU0YWZl"
+    url = "https://autodesk.com"
     
-    # 🌟 A mudança está aqui: adicionamos o ID e o SECRET diretamente no payload como exige a v2 da Autodesk
     payload = {
         "grant_type": "client_credentials",
         "scope": "viewables:read",
@@ -25,13 +24,11 @@ def obter_token_autodesk(client_id, client_secret):
         "client_secret": client_secret
     }
     
-    # Adicionamos o cabeçalho correto para envio de formulário web
     headers = {
         "Content-Type": "application/x-www-form-urlencoded"
     }
     
     try:
-        # Removemos o parâmetro auth= anterior e enviamos tudo via data e headers
         response = requests.post(url, data=payload, headers=headers)
         if response.status_code == 200:
             return response.json().get("access_token")
