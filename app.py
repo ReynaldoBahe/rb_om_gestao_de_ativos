@@ -36,6 +36,8 @@ filtro_tempo = st.sidebar.selectbox("Filtrar por Tempo Aberta:", ["Todos", "Meno
 
 st.sidebar.write("---")
 st.sidebar.header("🎨 Filtro de Cores no Modelo (BIM)")
+
+# Variável corrigida de forma idêntica em todo o script
 ativar_visao_cromatica = st.sidebar.toggle("🔴 Ativar Visão Cromática por Ativo Selecionado")
 
 st.sidebar.write("---")
@@ -55,15 +57,17 @@ if arquivo_upload is not None:
     except Exception as e:
         st.error(f"Erro ao ler o arquivo: {e}")
 
-# Criamos uma lista de OS padrão caso o arquivo não tenha sido carregado ainda
-lista_os = list(df['OS'].unique()) if not df.empty and 'OS' in df.columns else ["OS-2026-001", "OS-2026-002", "OS-2026-003"]
+# Mapeia dinamicamente a lista de OS disponíveis
+if not df.empty and 'OS' in df.columns:
+    lista_os = sorted(list(df['OS'].dropna().unique()))
+else:
+    lista_os = ["OS-2026-001", "OS-2026-002", "OS-2026-003"]
 
-# 4. CONFIGURAÇÃO DE SESSÃO PARA SINCRONIZAR AS ABAS
-# Isso permite que a escolha da OS na Aba 3 controle o link que roda na Aba 1
-if 'os_selecionada' not in st.session_state:
+# 4. CONFIGURAÇÃO DO ESTADO DA SESSÃO (SESSION STATE)
+if 'os_selecionada' not in st.session_state or st.session_state.os_selecionada not in lista_os:
     st.session_state.os_selecionada = lista_os[0]
 
-# 5. CRIAÇÃO DAS ABAS
+# 5. CRIAÇÃO DAS ABAS (OS 3 MÓDULOS)
 aba_modelo, aba_produtividade, aba_diagnostico = st.tabs([
     "📦 Modelo 3D (Speckle)", 
     "📊 Produtividade da Equipe", 
@@ -76,22 +80,24 @@ aba_modelo, aba_produtividade, aba_diagnostico = st.tabs([
 with aba_modelo:
     st.subheader("Visualizador Operacional de Ativos 3D")
     
-    # Busca o ID BIM correspondente à OS selecionada na base de dados
+    # Procura o ID BIM correspondente à OS selecionada na planilha real
     id_bim_alvo = ""
-    if not df.empty and 'OS' in df.columns and 'ID' in df.columns:
-        linha_ativo = df[df['OS'] == st.session_state.os_selecionada]
-        if not list(linha_ativo['ID']):
-            id_bim_alvo = str(linha_ativo['ID'].values[0])
+    if not df.empty and 'OS' in df.columns:
+        # Tenta achar a coluna de ID independente se estiver maiúscula ou minúscula
+        col_id = next((c for c in df.columns if c.upper() == 'ID'), None)
+        if col_id:
+            linha_ativo = df[df['OS'] == st.session_state.os_selecionada]
+            if not linha_ativo.empty:
+                id_bim_alvo = str(linha_ativo[col_id].values[0]).strip()
 
-    # Se não houver arquivo, usamos o ID padrão do print para testar
+    # Se não achar na planilha, usa o ID padrão para fins de demonstração
     if not id_bim_alvo:
         id_bim_alvo = "29e456a92924eb3747bbcd9bb3edd623"
 
-    # Constrói a URL final do Speckle aplicando o filtro de cor cirúrgico
-    if activar_visao_cromatica and id_bim_alvo:
-        # Passa o ID BIM via parâmetro oficial do Speckle para isolar e pintar o ativo de Vermelho (#FF0000)
+    # Aplica o filtro de isolamento e cor vermelha se o toggle estiver ligado
+    if ativar_visao_cromatica and id_bim_alvo:
         url_visualizador = f"{speckle_base_url}&filter=%5B%22{id_bim_alvo}%22%5D&overlay=%5B%7B%22id%22%3A%22{id_bim_alvo}%22%2C%22color%22%3A%22%23FF0000%22%7D%5D"
-        st.markdown(f"🎯 *Visão Cromática Ativa: Focando exclusivamente no Ativo ID `{id_bim_alvo}`*")
+        st.success(f"🎯 Visão Cromática Ativa: Filtrando e pintando o Ativo BIM `{id_bim_alvo}`")
     else:
         url_visualizador = speckle_base_url
         st.markdown("ℹ️ *Visualização padrão do modelo de engenharia.*")
@@ -103,12 +109,11 @@ with aba_modelo:
 # ==========================================
 with aba_produtividade:
     if not df.empty:
-        # Filtros aplicados na tabela de dados
         df_filtrado = df.copy()
         if filtro_status != "Todos" and 'Status' in df_filtrado.columns:
             df_filtrado = df_filtrado[df_filtrado['Status'] == filtro_status]
             
-        # Volumetria
+        # Volumetria Dinâmica das OSs
         st.markdown('<div class="vol-title">📊 Volumetria das Ordens de Serviço</div>', unsafe_allow_html=True)
         col_status_name = next((c for c in df.columns if c.lower() == 'status'), None)
         status_counts = df[col_status_name].value_counts() if col_status_name else {}
@@ -129,9 +134,9 @@ with aba_produtividade:
             
         st.markdown("---")
         
-        # Gráfico Altair
+        # Gráfico Altair de Produtividade por Técnico
         st.subheader("Controle de Ordens de Serviço por Técnico")
-        col_tecnico = next((c for c in df_filtrado.columns if c.lower() in ['técnico', 'tecnico', 'responsável', 'responsavel', 'técnico responsável']), df_filtrado.columns)
+        col_tecnico = next((c for c in df_filtrado.columns if c.lower() in ['técnico', 'tecnico', 'responsável', 'responsavel', 'técnico responsável']), df_filtrado.columns[0])
         df_produtividade = df_filtrado.groupby(col_tecnico).size().reset_index(name='Ordens')
         df_produtividade.columns = ['Técnico', 'Ordens']
         
@@ -157,22 +162,24 @@ with aba_diagnostico:
     
     with col_esq:
         st.markdown("🔎 **Seleção de Ativo para Auditoria**")
-        # Armazena a seleção diretamente no session_state para mandar para a Aba 1
+        
+        # Menu dropdown que atualiza a variável global do app
         st.session_state.os_selecionada = st.selectbox(
             "Selecione a OS para análise da IA:", 
             lista_os, 
-            index=lista_os.index(st.session_state.os_selecionada) if st.session_state.os_selecionada in lista_os else 0
+            index=lista_os.index(st.session_state.os_selecionada)
         )
         
-        # Coleta dados dinâmicos da OS selecionada caso a planilha exista
+        # Coleta de metadados dinâmicos da planilha com valores de reserva
         resp, setor, status, data_ab = "Pedro", "Climatização", "Fechado", "20/06/2026"
         if not df.empty and 'OS' in df.columns:
             dados_os = df[df['OS'] == st.session_state.os_selecionada]
             if not dados_os.empty:
-                resp = dados_os.get('Técnico', dados_os.get('Técnico Responsável', ["Pedro"])).values[0]
-                setor = dados_os.get('Setor', ["Climatização"]).values[0]
-                status = dados_os.get('Status', ["Fechado"]).values[0]
-                data_ab = dados_os.get('Data_Abertura', ["20/06/2026"]).values[0]
+                col_t = next((c for c in df.columns if c.lower() in ['técnico', 'tecnico', 'responsável', 'responsavel']), None)
+                resp = dados_os[col_t].values[0] if col_t else "Pedro"
+                setor = dados_os['Setor'].values[0] if 'Setor' in df.columns else "Climatização"
+                status = dados_os['Status'].values[0] if 'Status' in df.columns else "Fechado"
+                data_ab = dados_os['Data_Abertura'].values[0] if 'Data_Abertura' in df.columns else "20/06/2026"
 
         st.markdown(f"""
         <div class="ficha-tecnica">
@@ -192,8 +199,3 @@ with aba_diagnostico:
     with col_dir:
         st.markdown("⚡ **Análise de Engenharia Operacional da IA**")
         st.success(f"""
-        **ANÁLISE COMPLEMENTAR:** Ordem identificada como {st.session_state.os_selecionada}. O ativo associado ao ID BIM foi analisado pela malha preditiva e classificado sob o status atual de '{status}'. 
-        **Recomendação:** Seguir plano de calibração padrão de fábrica para o setor de {setor}.
-        """)
-        
-        df_ia = pd.DataFrame({'Métrica': ['Ordens Analisadas'], 'Valor': [1.0]})
