@@ -1,126 +1,90 @@
 import streamlit as st
-import streamlit.components.v1 as components
 import pandas as pd
 import altair as alt
-import requests
 
-# 1. Configuração Básica da Página
-st.set_page_config(page_title="Portal de Manutenção e Ativos 3D", layout="wide")
+# 1. CONFIGURAÇÃO DA PÁGINA
+st.set_page_config(
+    page_title="Portal de Engenharia & Produtividade",
+    page_icon="🏗️",
+    layout="wide"
+)
 
-# 🔐 CREDENCIAIS OPERACIONAIS AUTODESK APS
-CLIENT_ID = "X1BzZjM5NSSJAYUGlCkY6FFoFCQv1GXIzZDY6Y6TwKBRAVKFT"
-CLIENT_SECRET = "d2q3uGtYPYKBjiqfFpFd5OWArAhcoBuWtZwGi0fiY25TTyTjmXPConmmOFzSMo4X"
-URN_MODELO = "dXJuOmFkc2sub2JqZWN0czpvcy5vYmplY3Q6YTM2MHZpZXdlci1wcm90ZWN0ZWQvdDE3ODE1Nzk3NDNfOGI0ZGU3MzMtNmU1Ny00Y2IwLWIyMzQtMWYzNzYyYjkwMTY5LnJ2dA"
-
-# Função oficial para obter o Token v2 da Autodesk
-@st.cache_data(ttl=3500)
-def obter_token_autodesk(client_id, client_secret):
-    url_auth = "https://autodesk.com"
-    payload = {
-        "grant_type": "client_credentials",
-        "scope": "viewables:read",
-        "client_id": client_id,
-        "client_secret": client_secret
+# 2. DESIGN E ESTILIZAÇÃO CUSTOMIZADA
+st.markdown("""
+    <style>
+    .main-title {
+        font-size: 32px;
+        font-weight: bold;
+        color: #1E3A8A;
+        margin-bottom: 20px;
     }
-    headers = {"Content-Type": "application/x-www-form-urlencoded"}
-    try:
-        response = requests.post(url_auth, data=payload, headers=headers)
-        if response.status_code == 200:
-            return response.json().get("access_token")
-        return None
-    except:
-        return None
+    .metric-box {
+        background-color: #F3F4F6;
+        padding: 15px;
+        border-radius: 8px;
+        border-left: 5px solid #2563EB;
+    }
+    </style>
+""", unsafe_allow_html=True)
 
-# 2. Barra Lateral (Sidebar) com os Filtros
-st.sidebar.image("https://flaticon.com", width=80)
-st.sidebar.title("Configurações do Painel")
+st.markdown('<div class="main-title">🏗️ Portal de Engenharia & Gestão de Projetos</div>', unsafe_allow_html=True)
 
-link_speckle_padrao = "https://app.speckle.systems/projects/a649da7292/models/815af390c7?embedToken=a4a8c1dcd53b0cd8565611e886a1f8f7701bf67c79"
-link_cliente = st.sidebar.text_input("🔗 Link do Speckle (Cliente):", value=link_speckle_padrao)
+# 3. BASE DE DADOS SIMULADA (Substitua pelo carregamento da sua planilha se necessário)
+@st.cache_data
+def carregar_dados():
+    dados = {
+        'Técnico': ['Pedro', 'Pedro', 'Marcos', 'Tiago', 'Marcos', 'Pedro', 'Tiago', 'Lucas'],
+        'Ordens':,
+        'Status': ['Concluído', 'Em Andamento', 'Concluído', 'Pendente', 'Concluído', 'Concluído', 'Em Andamento', 'Concluído']
+    }
+    return pd.DataFrame(dados)
 
-st.sidebar.markdown("---")
-st.sidebar.subheader("Filtros Operacionais")
-uploaded_file = st.sidebar.file_uploader("📂 Carregar Planilha de Ativos/OM", type=["csv", "xlsx"])
+df = carregar_dados()
 
-setor_selecionado = st.sidebar.selectbox("Filtrar por Setor:", ["Todos", "Elétrica", "Mecânica", "Hidráulica", "Climatização"])
-status_selecionado = st.sidebar.selectbox("Filtrar por Status:", ["Todos", "Aberto", "Fechado", "Em Andamento"])
-criticidade_selecionada = st.sidebar.selectbox("Filtrar por Criticidade:", ["Todos", "Alta", "Média", "Baixa"])
+# 4. CRIAÇÃO DAS ABAS (Autodesk APS removida com sucesso)
+aba_modelo, aba_produtividade = st.tabs(["📦 Modelo 3D (Speckle)", "📊 Produtividade da Equipe"])
 
-# 3. Cabeçalho Principal do Painel
-st.title("🏗️ Painel Avançado de Comparação de Ativos 3D")
-st.markdown("---")
-
-# ✨ 4. CRIAÇÃO DAS ABAS DE COMPARATIVO
-aba_speckle, aba_autodesk = st.tabs(["🌐 Visualizador Speckle", "📐 Visualizador Autodesk Viewer (APS)"])
-
-with aba_speckle:
-    st.markdown("### Modelo Renderizado via Speckle")
-    if link_cliente:
-        try:
-            components.iframe(link_cliente, height=550, scrolling=False)
-        except Exception as e:
-            st.error(f"Erro ao carregar o visualizador Speckle: {e}")
-    else:
-        st.info("💡 Insira o link do Speckle do cliente na barra lateral para ativar o modelo 3D.")
-
-with aba_autodesk:
-    st.markdown("### Modelo Renderizado via Autodesk APS (Nativo)")
-    access_token = obter_token_autodesk(CLIENT_ID, CLIENT_SECRET)
+# ==========================================
+# ABA 1: MODELO 3D (SPECKLE INTERATIVO)
+# ==========================================
+with aba_modelo:
+    st.subheader("Visualização do Modelo Digital do Resort")
+    st.markdown("ℹ️ *Carregamento direto via infraestrutura aberta Speckle. Custo de API: $0.00.*")
     
-    if access_token and URN_MODELO:
-        autodesk_html = f"""
-        <div id="forgeViewer" style="width: 100%; height: 500px; background-color: #f8f9fa; border-radius: 10px; border: 1px solid #dee2e6;"></div>
-        <link rel="stylesheet" href="https://autodesk.com" type="text/css">
-        <script src="https://autodesk.com"></script>
-        <script>
-            var viewer;
-            var options = {{
-                env: 'AutodeskProduction2', api: 'streamingV2',
-                getAccessToken: function(onTokenReady) {{ onTokenReady("{access_token}", 3600); }}
-            }};
-            Autodesk.Viewing.Initializer(options, function() {{
-                var htmlDiv = document.getElementById('forgeViewer');
-                viewer = new Autodesk.Viewing.GuiViewer3D(htmlDiv);
-                viewer.start();
-                var documentId = 'urn:{URN_MODELO}';
-                Autodesk.Viewing.Document.load(documentId, function(doc) {{
-                    var viewables = doc.getRoot().getDefaultGeometry();
-                    viewer.loadDocumentNode(doc, viewables);
-                }}, null);
-            }});
-        </script>
-        """
-        components.html(autodesk_html, height=520)
-    else:
-        st.error("❌ Falha na geração do token. Verifique as credenciais da Autodesk no topo do arquivo.")
+    # URL do Viewer do Speckle (Substitua pela URL exata do seu stream/projeto se necessário)
+    speckle_url = "https://speckle.xyz" 
+    
+    # Renderização do visualizador 3D fluido
+    st.components.v1.iframe(speckle_url, height=600, scrolling=False)
 
-# 5. Indicadores de Manutenção Abaixo
-st.markdown("---")
-st.subheader("📊 Indicadores de Manutenção Relacionados")
-
-if uploaded_file is not None:
-    df = pd.read_csv(uploaded_file) if uploaded_file.name.endswith('.csv') else pd.read_excel(uploaded_file)
+# ==========================================
+# ABA 2: PRODUTIVIDADE (MOTOR ALTAIR CORRIGIDO)
+# ==========================================
+with aba_produtividade:
+    st.subheader("Controle de Ordens de Serviço por Técnico")
+    
+    # Agrupamento correto dos dados por profissional
+    df_produtividade = df.groupby('Técnico')['Ordens'].sum().reset_index()
+    
+    # Construção do gráfico corrigido usando a biblioteca Altair
+    grafico_altair = alt.Chart(df_produtividade).mark_bar(color='#1f77b4').encode(
+        x=alt.X('Técnico:N', title='Profissional Técnico', sort='-y'),
+        y=alt.Y('Ordens:Q', title='Total de Ordens de Serviço'),
+        tooltip=['Técnico', 'Ordens']
+    ).properties(
+        width='container',
+        height=400
+    )
+    
+    # Exibe o gráfico corrigido na tela
+    st.altair_chart(grafico_altair, use_container_width=True)
+    
+    # Resumo das Métricas abaixo do gráfico
+    st.markdown("---")
     col1, col2, col3 = st.columns(3)
-    col1.metric("Total de Ativos Mapeados", len(df))
-    col2.metric("Ordens de Serviço Ativas", len(df[df['Status'].str.lower() == 'aberto']) if 'Status' in df.columns else 0)
-    col3.metric("Taxa de Conformidade", "94.2%")
-    
-    st.markdown("### 📊 Produtividade por Responsável Técnico")
-    df_fechadas_resp = df[df['Status'].str.strip().str.lower().isin(['fechado', 'fechada'])]
-    if not df_fechadas_resp.empty:
-        df_fechadas_resp['Responsavel'] = df_fechadas_resp['Responsavel'].astype(str).str.strip()
-        produtividade = df_fechadas_resp['Responsavel'].value_counts().reset_index()
-        produtividade.columns = ['Responsável', 'Quantidade']
-        chart = alt.Chart(produtividade).mark_bar(color='#1f77b4').encode(
-            x=alt.X('Responsável:N', sort='-y', title='Técnico Responsável'),
-            y=alt.Y('Quantidade:Q', title='Ordens Fechadas')
-        )
-        st.altair_chart(chart, use_container_width=True)
-    
-    st.dataframe(df, use_container_width=True)
-else:
-    col1, col2, col3 = st.columns(3)
-    col1.metric("Total de Ativos Regulares", "148", "+12")
-    col2.metric("Manutenções Críticas", "3", "-1")
-    col3.metric("Disponibilidade Geral", "98.7%")
-    st.info("Aguardando upload de planilha para carregar os relatórios de OS.")
+    with col1:
+        st.markdown(f'<div class="metric-box"><b>Total de Ordens:</b><br><span style="font-size:24px;">{df["Ordens"].sum()}</span></div>', unsafe_allow_html=True)
+    with col2:
+        st.markdown(f'<div class="metric-box"><b>Líder de Produção:</b><br><span style="font-size:24px;">{df_produtividade.loc[df_produtividade["Ordens"].idxmax(), "Técnico"]}</span></div>', unsafe_allow_html=True)
+    with col3:
+        st.markdown(f'<div class="metric-box"><b>Status Ativo:</b><br><span style="font-size:24px;">100% Comercial</span></div>', unsafe_allow_html=True)
