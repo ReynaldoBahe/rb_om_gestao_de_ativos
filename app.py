@@ -31,7 +31,7 @@ st.markdown("""
 st.markdown('<div class="main-title">🏗️ Portal de Engenharia & Gestão de Projetos</div>', unsafe_allow_html=True)
 
 # ==========================================
-# 3. BARRA LATERAL (ESTRUTURA ORIGINAL FIXA)
+# 3. BARRA LATERAL CONTROLE UNIFICADO
 # ==========================================
 st.sidebar.header("Filtros de Visão")
 
@@ -42,10 +42,10 @@ filtro_tempo = st.sidebar.selectbox("Filtrar por Tempo Aberta:", ["Todos", "Meno
 st.sidebar.write("---")
 arquivo_upload = st.sidebar.file_uploader("📂 Carregar Planilha de Ativos/OM", type=["csv", "xlsx"])
 
-# URL base do Speckle em modo embed limpo original aprovado
+# URL base do Speckle original aprovado
 speckle_base_url = "https://speckle.systems"
 
-# BLINDAGEM DE MEMÓRIA: Garante persistência dos dados entre a troca de abas
+# Lógica de persistência estável em Session State contra perda de dados entre abas
 if 'df_permanente' not in st.session_state:
     st.session_state.df_permanente = pd.DataFrame()
 
@@ -56,27 +56,30 @@ if arquivo_upload is not None:
         else:
             st.session_state.df_permanente = pd.read_excel(arquivo_upload)
     except Exception as e:
-        st.error(f"Erro ao ler o arquivo: {e}")
+        st.error(f"Erro ao ler arquivo: {e}")
 
 df = st.session_state.df_permanente
 
-# Mapeia dinamicamente a lista de OS disponíveis com fallback seguro
+# Mapeia dinamicamente a lista de OS disponíveis
 if not df.empty and 'OS' in df.columns:
     lista_os = sorted(list(df['OS'].dropna().astype(str).unique()))
 else:
     lista_os = ["OS-2026-001", "OS-2026-002", "OS-2026-003"]
 
-# Configuração estável do estado da sessão (Session State)
+# BLINDAGEM OPERACIONAL: Garante que a primeira OS seja selecionada automaticamente no primeiro carregamento
 if 'os_selecionada' not in st.session_state or st.session_state.os_selecionada not in lista_os:
     if lista_os:
         st.session_state.os_selecionada = lista_os[0]
 
 # -------------------------------------------------------------------------
-# PROCESSAMENTO EXTRA-SEGURO DE VARIÁVEIS (MÉDOTO .ILOC EVITA TELAS EM BRANCO)
+# EXTRAÇÃO DE VARIÁVEIS SEGURA COM .ILOC (EVITA MATRIZES E CONFLITOS VISUAIS)
 # -------------------------------------------------------------------------
 id_bim_alvo = "29e456a92924eb3747bbcd9bb3edd623"
-resp, setor, status, data_ab = "Pedro", "Climatização", "Fechado", "20/06/2026"
-descricao_falha = "Aguardando verificação técnica."
+resp = "Pedro"
+setor = "Climatização"
+status = "Fechado"
+data_ab = "20/06/2026"
+descricao_falha = "Análise complementar de engenharia preditiva."
 criticidade_ativo = "Média"
 
 if not df.empty and 'OS' in df.columns:
@@ -85,12 +88,13 @@ if not df.empty and 'OS' in df.columns:
         col_id = next((c for c in df.columns if c.upper() == 'ID'), None)
         if col_id and col_id in dados_os.columns:
             id_bim_alvo = str(dados_os[col_id].iloc[0]).strip()
+        
         col_t = next((c for c in df.columns if c.lower() in ['técnico', 'tecnico', 'responsável', 'responsavel']), None)
         resp = str(dados_os[col_t].iloc[0]) if col_t else "Pedro"
         setor = str(dados_os['Setor'].iloc[0]) if 'Setor' in df.columns else "Climatização"
         status = str(dados_os['Status'].iloc[0]) if 'Status' in df.columns else "Fechado"
         data_ab = str(dados_os['Data_Abertura'].iloc[0]) if 'Data_Abertura' in df.columns else "20/06/2026"
-        descricao_falha = str(dados_os['Descrição'].iloc[0]) if 'Descrição' in df.columns else "Sem descrição registrada."
+        descricao_falha = str(dados_os['Descrição'].iloc[0]) if 'Descrição' in df.columns else "Sem descrição cadastrada."
         criticidade_ativo = str(dados_os['Criticidade'].iloc[0]) if 'Criticidade' in df.columns else "Média"
 
 if not id_bim_alvo or id_bim_alvo == "nan":
@@ -106,21 +110,21 @@ aba_modelo, aba_produtividade, aba_diagnostico = st.tabs([
 ])
 
 # ==========================================
-# ABA 1: MODELO 3D (RASTREABILIDADE BIM ORIGINAL)
+# ABA 1: MODELO 3D
 # ==========================================
 with aba_modelo:
     st.subheader("Visualizador Operacional de Ativos 3D")
-    st.info(f"🔗 Módulo BIM Sincronizado | Rastreando Ativo ID: `{id_bim_alvo}` (Selecionado no Centro de Diagnóstico)")
+    st.info(f"🔗 Módulo BIM Sincronizado | Rastreando Ativo ID: `{id_bim_alvo}` (Selecione outra OS na aba Centro de Diagnóstico para focar)")
     st.components.v1.iframe(speckle_base_url, height=600, scrolling=False)
 
 # ==========================================
-# ABA 2: PRODUTIVIDADE E RELATÓRIO (INTEGRANDO FILTRO DE TEMPO OPERACIONAL)
+# ABA 2: PRODUTIVIDADE E RELATÓRIO
 # ==========================================
 with aba_produtividade:
     if not df.empty:
         df_filtrado = df.copy()
         
-        # TRATAMENTO INTELIGENTE E ISOLADO DO TEMPO ABERTA
+        # TRATAMENTO SEGURO DE TEMPO ABERTO LOCAL
         if 'Data_Abertura' in df_filtrado.columns:
             try:
                 df_filtrado['Data_Abertura_dt'] = pd.to_datetime(df_filtrado['Data_Abertura'], errors='coerce')
@@ -136,7 +140,6 @@ with aba_produtividade:
             except Exception as e:
                 pass
 
-        # FILTRAGEM POR STATUS E CRITICIDADE ORIGINAL
         if filtro_status != "Todos" and 'Status' in df_filtrado.columns:
             df_filtrado = df_filtrado[df_filtrado['Status'] == filtro_status]
         if filtro_criticidade != "Todos" and 'Criticidade' in df_filtrado.columns:
@@ -181,7 +184,7 @@ with aba_produtividade:
         st.info("💡 Por favor, certifique-se de que a planilha está carregada na barra lateral.")
 
 # ==========================================
-# ABA 3: CENTRO DE DIAGNÓSTICO AVANÇADO (ORIGINAL RECUPERADO COM HISTÓRICO BIM)
+# ABA 3: CENTRO DE DIAGNÓSTICO AVANÇADO
 # ==========================================
 with aba_diagnostico:
     st.subheader("🧠 Centro de Diagnóstico Avançado (IA Preditiva)")
@@ -190,3 +193,5 @@ with aba_diagnostico:
     with col_esq:
         st.markdown("🔎 **Seleção de Ativo para Auditoria**")
         
+        # Uso do .iloc[0] resolve em definitivo o bug do selectbox e impede a tela em branco
+        idx_selecionado = lista_os.index(st.session_state.os_selecionada) if st.session_state.os_selecionada in lista_os else 0
