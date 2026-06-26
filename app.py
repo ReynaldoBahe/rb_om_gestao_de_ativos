@@ -30,64 +30,55 @@ st.markdown("""
 
 st.markdown('<div class="main-title">🏗️ Portal de Engenharia & Gestão de Projetos</div>', unsafe_allow_html=True)
 
-# URL base do Speckle original aprovado
-speckle_base_url = "https://speckle.systems"
-
 # ==========================================
-# 3. INTERAÇÃO INTELIGENTE DA BARRA LATERAL
+# 3. BARRA LATERAL (ESTRUTURA ORIGINAL E COMPLETA)
 # ==========================================
-# Armazena os dados da planilha de forma persistente na sessão do usuário
-if 'df_persistido' not in st.session_state:
-    st.session_state.df_persistido = pd.DataFrame()
-
-# Cria as variáveis padrão de filtros vazias caso o usuário esteja na Aba 1
-filtro_status = "Todos"
-filtro_criticidade = "Todos"
-filtro_tempo = "Todos"
-arquivo_upload = None
-
-# Captura qual aba está selecionada usando o controle nativo de Abas do Streamlit
-if 'aba_selecionada_key' not in st.session_state:
-    st.session_state.aba_selecionada_key = 0
-
-# Renderiza a barra lateral condicionalmente (Fica limpa na Aba 1 e com menu nas Abas 2 e 3)
 st.sidebar.header("Filtros de Visão")
 
-if st.session_state.aba_selecionada_key == 0:
-    # ABA 1 selecionada: Deixa a faixa lateral cinza completamente limpa de widgets
-    st.sidebar.caption("Visualização de Engenharia Ativa")
-else:
-    # ABAS 2 ou 3 selecionadas: Volta com o menu completo exatamente como estava aprovado
-    filtro_status = st.sidebar.selectbox("Filtrar por Status:", ["Todos", "Aberta", "Em Andamento", "Pausada", "Fechado"])
-    filtro_criticidade = st.sidebar.selectbox("Filtrar por Criticidade:", ["Todos", "Alta", "Média", "Baixa"])
-    filtro_tempo = st.sidebar.selectbox("Filtrar por Tempo Aberta:", ["Todos", "Menos de 24h", "Entre 2 e 7 dias", "Mais de 7 dias"])
-    st.sidebar.write("---")
-    arquivo_upload = st.sidebar.file_uploader("📂 Carregar Planilha de Ativos/OM", type=["csv", "xlsx"])
+filtro_status = st.sidebar.selectbox("Filtrar por Status:", ["Todos", "Aberta", "Em Andamento", "Pausada", "Fechado"])
+filtro_criticidade = st.sidebar.selectbox("Filtrar por Criticidade:", ["Todos", "Alta", "Média", "Baixa"])
+filtro_tempo = st.sidebar.selectbox("Filtrar por Tempo Aberta:", ["Todos", "Menos de 24h", "Entre 2 e 7 dias", "Mais de 7 dias"])
 
-# Processa de forma invisível o upload do arquivo se ele for carregado nas Abas 2 ou 3
+st.sidebar.write("---")
+arquivo_upload = st.sidebar.file_uploader("📂 Carregar Planilha de Ativos/OM", type=["csv", "xlsx"])
+
+# URL base do Speckle em modo embed limpo original aprovado
+speckle_base_url = "https://speckle.systems"
+
+# Lógica de carregamento de dados segura e silenciosa
+df = pd.DataFrame()
 if arquivo_upload is not None:
     try:
         if arquivo_upload.name.endswith('.csv'):
-            st.session_state.df_persistido = pd.read_csv(arquivo_upload)
+            df = pd.read_csv(arquivo_upload)
         else:
-            st.session_state.df_persistido = pd.read_excel(arquivo_upload)
+            df = pd.read_excel(arquivo_upload)
     except Exception as e:
         st.error(f"Erro ao ler o arquivo: {e}")
 
-df = st.session_state.df_persistido
-
-# Mapeia dinamicamente a lista de OS disponíveis com base na planilha ativa
+# Mapeia dinamicamente a lista de OS disponíveis
 if not df.empty and 'OS' in df.columns:
     lista_os = sorted(list(df['OS'].dropna().unique()))
 else:
     lista_os = ["OS-2026-001", "OS-2026-002", "OS-2026-003"]
 
-# Configuração estável do estado da Ordem de Serviço selecionada
+# ==========================================
+# 4. CONFIGURAÇÃO DO ESTADO DA SESSÃO (SESSION STATE)
+# ==========================================
 if 'os_selecionada' not in st.session_state or st.session_state.os_selecionada not in lista_os:
     if lista_os:
         st.session_state.os_selecionada = lista_os[0]
 
-# Cálculo preventivo do ID BIM Alvo para evitar NameError nas renderizações entre abas
+# ==========================================
+# 5. CRIAÇÃO DAS ABAS (MÓDULOS DO PORTAL)
+# ==========================================
+aba_modelo, aba_produtividade, aba_diagnostico = st.tabs([
+    "📦 Modelo 3D (Speckle)", 
+    "📊 Produtividade da Equipe", 
+    "🧠 Centro de Diagnóstico (IA)"
+])
+
+# Cálculo global e seguro do ID BIM Alvo para evitar NameError nas abas seguintes
 id_bim_alvo = ""
 if not df.empty and 'OS' in df.columns:
     col_id = next((c for c in df.columns if c.upper() == 'ID'), None)
@@ -100,39 +91,30 @@ if not id_bim_alvo or id_bim_alvo == "nan":
     id_bim_alvo = "29e456a92924eb3747bbcd9bb3edd623"
 
 # ==========================================
-# 4. CRIAÇÃO ÚNICA DAS ABAS (MÓDULOS DO PORTAL)
+# ABA 1: MODELO 3D (FAIXA CINZA LIMPA COM CSS SEGURO)
 # ==========================================
-# O parâmetro do_index atualiza o session_state sempre que o usuário clica em outra aba
-aba_modelo, aba_produtividade, aba_diagnostico = st.tabs([
-    "📦 Modelo 3D (Speckle)", 
-    "📊 Produtividade da Equipe", 
-    "🧠 Centro de Diagnóstico (IA)"
-])
-
-# Força o Streamlit a monitorar cliques para redesenhar a barra lateral se houver troca de aba
-if 'aba_anterior' not in st.session_state:
-    st.session_state.aba_anterior = 0
-
-# Detecta em qual aba o usuário está navegando no momento
 with aba_modelo:
-    if st.session_state.aba_anterior != 0:
-        st.session_state.aba_selecionada_key = 0
-        st.session_state.aba_anterior = 0
-        st.rerun()
-        
+    # Esta regra oculta apenas os elementos internos do painel, preservando a faixa cinza lateral
+    st.markdown("""
+        <style>
+        [data-baseweb="tab-panel"]:nth-of-type(1) [data-testid="stSidebar"] [data-testid="stWidgetFormModifier"],
+        [data-baseweb="tab-panel"]:nth-of-type(1) [data-testid="stSidebar"] div.stSelectbox,
+        [data-baseweb="tab-panel"]:nth-of-type(1) [data-testid="stSidebar"] div.stFileUploader,
+        [data-baseweb="tab-panel"]:nth-of-type(1) [data-testid="stSidebar"] hr,
+        [data-baseweb="tab-panel"]:nth-of-type(1) [data-testid="stSidebar"] h2 {
+            display: none !important;
+        }
+        </style>
+    """, unsafe_allow_html=True)
+
     st.subheader("Visualizador Operacional de Ativos 3D")
     st.info(f"🔗 Módulo BIM Sincronizado | Rastreando Ativo ID: `{id_bim_alvo}` (Selecione outra OS na aba Centro de Diagnóstico para focar)")
     st.components.v1.iframe(speckle_base_url, height=600, scrolling=False)
 
 # ==========================================
-# ABA 2: PRODUTIVIDADE E RELATÓRIO (CÓDIGO ORIGINAL APROVADO)
+# ABA 2: PRODUTIVIDADE E RELATÓRIO (CÓDIGO ORIGINAL INTEGRAL APROVADO)
 # ==========================================
 with aba_produtividade:
-    if st.session_state.aba_anterior != 1:
-        st.session_state.aba_selecionada_key = 1
-        st.session_state.aba_anterior = 1
-        st.rerun()
-
     if not df.empty:
         df_filtrado = df.copy()
         if filtro_status != "Todos" and 'Status' in df_filtrado.columns:
@@ -174,17 +156,12 @@ with aba_produtividade:
         st.markdown('📋 **Relatório Sincronizado de Ordens de Serviço**')
         st.dataframe(df_filtrado, use_container_width=True)
     else:
-        st.info("💡 Por favor, certifique-se de que a planilha está carregada na barra lateral das abas operacionais.")
+        st.info("💡 Por favor, certifique-se de que a planilha está carregada na barra lateral.")
 
 # ==========================================
-# ABA 3: CENTRO DE DIAGNÓSTICO AVANÇADO (CÓDIGO ORIGINAL APROVADO)
+# ABA 3: CENTRO DE DIAGNÓSTICO AVANÇADO (CÓDIGO ORIGINAL INTEGRAL APROVADO)
 # ==========================================
 with aba_diagnostico:
-    if st.session_state.aba_anterior != 2:
-        st.session_state.aba_selecionada_key = 2
-        st.session_state.aba_anterior = 2
-        st.rerun()
-
     st.subheader("🧠 Centro de Diagnóstico Avançado (IA Preditiva)")
     col_esq, col_dir = st.columns(2)
     
@@ -204,3 +181,14 @@ with aba_diagnostico:
                 col_t = next((c for c in df.columns if c.lower() in ['técnico', 'tecnico', 'responsável', 'responsavel']), None)
                 resp = str(dados_os[col_t].values[0]) if col_t else "Pedro"
                 setor = str(dados_os['Setor'].values[0]) if 'Setor' in df.columns else "Climatização"
+                status = str(dados_os['Status'].values[0]) if 'Status' in df.columns else "Fechado"
+                data_ab = str(dados_os['Data_Abertura'].values[0]) if 'Data_Abertura' in df.columns else "20/06/2026"
+
+        html_ficha = '<div class="ficha-tecnica"><h4 style="margin-top:0; color:#1E3A8A;">📋 Ficha Técnica do Ativo</h4><ul>'
+        html_ficha += f'<li><b>ID BIM:</b> {id_bim_alvo}</li>'
+        html_ficha += f'<li><b>Responsável Técnico:</b> {resp}</li>'
+        html_ficha += f'<li><b>Setor:</b> {setor}</li>'
+        html_ficha += f'<li><b>Status Atual:</b> {status}</li>'
+        html_ficha += f'<li><b>Data de Abertura:</b> {data_ab}</li>'
+        html_ficha += '<li><b>Histórico de Quebras:</b> 3 recorrências registradas nos últimos 180 dias.</li></ul>'
+        html_ficha += '<a href="#" style="color:#2563EB; font-weight:bold; text-decoration:none;">📄 Acessar Manual Técnico do Ativo</a></div>'
