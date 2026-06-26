@@ -87,15 +87,17 @@ with aba_modelo:
         if col_id:
             linha_ativo = df[df['OS'] == st.session_state.os_selecionada]
             if not linha_ativo.empty:
-                id_bim_alvo = str(linha_ativo[col_id].values).strip()
+                id_bim_alvo = str(linha_ativo[col_id].values[0]).strip()
 
+    # ID reserva do resort para o app não abrir em branco
     if not id_bim_alvo or id_bim_alvo == "nan" or "Array" in id_bim_alvo:
         id_bim_alvo = "29e456a92924eb3747bbcd9bb3edd623"
 
-    # Lógica de rastreabilidade textual ativa
+    # AGORA SIM: Lógica de isolamento real e automático por URL
     if ativar_visao_cromatica and id_bim_alvo:
-        url_visualizador = f"{speckle_base_url}&filter=%5B%22{id_bim_alvo}%22%5D"
-        st.success(f"🎯 ID Mapeado com Sucesso: Use o ID `{id_bim_alvo}` na busca do modelo para focar no ativo.")
+        # O parâmetro &isolate força o Speckle a esconder o resort e focar na peça automaticamente
+        url_visualizador = f"{speckle_base_url}&isolate=%5B%22{id_bim_alvo}%22%5D"
+        st.success(f"🎯 Isolamento Digital Ativo: Focando cirurgicamente no Ativo BIM `{id_bim_alvo}`")
     else:
         url_visualizador = speckle_base_url
         st.markdown("ℹ️ *Visualização padrão do modelo de engenharia.*")
