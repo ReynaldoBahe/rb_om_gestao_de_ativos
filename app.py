@@ -37,7 +37,7 @@ filtro_tempo = st.sidebar.selectbox("Filtrar por Tempo Aberta:", ["Todos", "Meno
 st.sidebar.write("---")
 st.sidebar.header("🎨 Filtro de Cores no Modelo (BIM)")
 
-# Interruptor de ativação do isolamento no modelo
+# Interruptor de ativação do isolamento no modelo (Nome correto: ativar_visao_cromatica)
 ativar_visao_cromatica = st.sidebar.toggle("🔴 Ativar Visão Cromática por Ativo Selecionado")
 
 st.sidebar.write("---")
@@ -76,7 +76,7 @@ aba_modelo, aba_produtividade, aba_diagnostico = st.tabs([
 ])
 
 # ==========================================
-# ABA 1: MODELO 3D (SPECKLE - APENAS UM IFRAME)
+# ABA 1: MODELO 3D (SPECKLE - TOTALMENTE CORRIGIDO)
 # ==========================================
 with aba_modelo:
     st.subheader("Visualizador Operacional de Ativos 3D")
@@ -94,8 +94,8 @@ with aba_modelo:
     if not id_bim_alvo or id_bim_alvo == "nan":
         id_bim_alvo = "29e456a92924eb3747bbcd9bb3edd623"
 
-    # Aplica o filtro de isolamento nativo se o botão na barra lateral estiver ligado
-    if activar_visao_cromatica and id_bim_alvo:
+    # Verificação corrigida: alterado de 'activar_visao_cromatica' para 'ativar_visao_cromatica'
+    if ativar_visao_cromatica and id_bim_alvo:
         url_visualizador = f"{speckle_base_url}&filter=%5B%22{id_bim_alvo}%22%5D"
         st.success(f"🎯 Isolamento Ativo: Focando no componente BIM {id_bim_alvo}")
     else:
@@ -193,4 +193,3 @@ with aba_diagnostico:
     with col_dir:
         st.markdown("⚡ **Análise de Engenharia Operacional da IA**")
         
-        mensagem_ia = f"**ANÁLISE COMPLEMENTAR:** Ordem identificada como {st.session_state.os_selecionada}. O ativo associado ao ID BIM foi analisado pela malha preditiva e classificado sob o status atual de '{status}'. Recomendação: Seguir plano de calibração padrão de fábrica para o setor de {setor}."
