@@ -21,8 +21,11 @@ def obter_token_autodesk(client_id, client_secret):
         response = requests.post(url, data=payload, auth=(client_id, client_secret))
         if response.status_code == 200:
             return response.json().get("access_token")
-        return None
-    except:
+        else:
+            st.error(f"❌ Erro da Autodesk (Código {response.status_code}): {response.text}")
+            return None
+    except Exception as e:
+        st.error(f"❌ Erro de Conexão: {e}")
         return None
 
 # 2. Barra Lateral (Sidebar) com os Filtros da OM
