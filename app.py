@@ -87,7 +87,7 @@ else:
 # 4. CONFIGURAÇÃO DO ESTADO DA SESSÃO (SESSION STATE)
 if 'os_selecionada' not in st.session_state or st.session_state.os_selecionada not in lista_os:
     if lista_os:
-        st.session_state.os_selecionada = lista_os
+        st.session_state.os_selecionada = lista_os[0]
 
 # 5. CRIAÇÃO DAS ABAS (OS 3 MÓDULOS)
 aba_modelo, aba_produtividade, aba_diagnostico = st.tabs([
@@ -102,13 +102,13 @@ aba_modelo, aba_produtividade, aba_diagnostico = st.tabs([
 with aba_modelo:
     st.subheader("Visualizador Operacional de Ativos 3D")
     
-    id_bim_alvo = ""
+    id_bim_alvo = "29e456a92924eb3747bbcd9bb3edd623"
     if not df.empty and 'OS' in df.columns:
         col_id = next((c for c in df.columns if c.upper() == 'ID'), None)
         if col_id:
             linha_ativo = df[df['OS'].astype(str) == str(st.session_state.os_selecionada)]
             if not linha_ativo.empty:
-                id_bim_alvo = str(linha_ativo[col_id].values).strip()
+                id_bim_alvo = str(linha_ativo[col_id].iloc[0]).strip()
 
     if not id_bim_alvo or id_bim_alvo == "nan":
         id_bim_alvo = "29e456a92924eb3747bbcd9bb3edd623"
@@ -164,12 +164,11 @@ with aba_produtividade:
         st.info("💡 Por favor, certifique-se de que a planilha está carregada na barra lateral.")
 
 # ==========================================
-# ABA 3: CENTRO DE DIAGNÓSTICO AVANÇADO (ESTRUTURA PLANA ANTI-INDENTATIONERROR)
+# ABA 3: CENTRO DE DIAGNÓSTICO AVANÇADO
 # ==========================================
 with aba_diagnostico:
     st.subheader("🧠 Centro de Diagnóstico Avançado (IA Preditiva)")
     
-    # Declaramos as colunas e injetamos de forma direta e sem blocos aninhados "with"
     col_esq, col_dir = st.columns(2)
     
     col_esq.markdown("🔎 **Seleção de Ativo para Auditoria**")
@@ -186,11 +185,15 @@ with aba_diagnostico:
     if not df.empty and 'OS' in df.columns:
         dados_os = df[df['OS'].astype(str) == str(st.session_state.os_selecionada)]
         if not dados_os.empty:
+            col_id = next((c for c in df.columns if c.upper() == 'ID'), None)
+            if col_id and col_id in dados_os.columns:
+                id_bim_alvo = str(dados_os[col_id].iloc[0]).strip()
             col_t = next((c for c in df.columns if c.lower() in ['técnico', 'tecnico', 'responsável', 'responsavel']), None)
-            resp = str(dados_os[col_t].values) if col_t else "Pedro"
-            setor = str(dados_os['Setor'].values) if 'Setor' in df.columns else "Climatização"
-            status = str(dados_os['Status'].values) if 'Status' in df.columns else "Fechado"
-            data_ab = str(dados_os['Data_Abertura'].values) if 'Data_Abertura' in df.columns else "20/06/2026"
+            # CORREÇÃO CRÍTICA: Uso de .iloc[0] para extrair texto limpo (string pura)
+            resp = str(dados_os[col_t].iloc[0]) if col_t else "Pedro"
+            setor = str(dados_os['Setor'].iloc[0]) if 'Setor' in df.columns else "Climatização"
+            status = str(dados_os['Status'].iloc[0]) if 'Status' in df.columns else "Fechado"
+            data_ab = str(dados_os['Data_Abertura'].iloc[0]) if 'Data_Abertura' in df.columns else "20/06/2026"
 
     html_ficha = '<div class="ficha-tecnica"><h4 style="margin-top:0; color:#1E3A8A;">📋 Ficha Técnica do Ativo</h4><ul>'
     html_ficha += f'<li><b>ID BIM:</b> {id_bim_alvo}</li>'
@@ -199,7 +202,3 @@ with aba_diagnostico:
     html_ficha += f'<li><b>Status Atual:</b> {status}</li>'
     html_ficha += f'<li><b>Data de Abertura:</b> {data_ab}</li>'
     html_ficha += '<li><b>Histórico de Quebras:</b> 3 recorrências registradas nos últimos 180 dias.</li></ul>'
-    html_ficha += '<a href="#" style="color:#2563EB; font-weight:bold; text-decoration:none;">📄 Acessar Manual Técnico do Ativo</a></div>'
-    
-    # Injeta a ficha diretamente no container da esquerda
-    col_esq.markdown(html_ficha, unsafe_allow_html=True)
