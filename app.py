@@ -68,7 +68,7 @@ else:
 # Configuração estável do estado da sessão para sincronização de OS
 if 'os_selecionada' not in st.session_state or st.session_state.os_selecionada not in lista_os:
     if lista_os:
-        st.session_state.os_selecionada = lista_os[0]
+        st.session_state.os_selecionada = lista_os
 
 # -------------------------------------------------------------------------
 # EXTRAÇÃO REATIVA DE VARIÁVEIS COM BASE NA OS SELECIONADA (ALIMENTA AS ABAS)
