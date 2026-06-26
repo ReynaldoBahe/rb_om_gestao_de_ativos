@@ -73,7 +73,7 @@ if 'os_selecionada' not in st.session_state or st.session_state.os_selecionada n
         st.session_state.os_selecionada = lista_os[0]
 
 # -------------------------------------------------------------------------
-# EXTRAÇÃO DE VARIÁVEIS COM .ILOC[0] (PROVÊ STRING LIMPA SEM COLCHETES)
+# EXTRAÇÃO DE VARIÁVEIS COM .ILOC[0] (GARANTE STRING PURA SEM COLCHETES)
 # -------------------------------------------------------------------------
 id_bim_alvo = "29e456a92924eb3747bbcd9bb3edd623"
 resp = "Pedro"
@@ -195,7 +195,5 @@ with aba_diagnostico:
         st.markdown("🔎 **Seleção de Ativo para Auditoria**")
         
         idx_selecionado = lista_os.index(st.session_state.os_selecionada) if st.session_state.os_selecionada in lista_os else 0
-        st.session_state.os_selecionada = st.selectbox(
-            "Selecione a OS para análise da IA:", 
-            lista_os, 
-            index=idx_selecionado
+        st.session_state.os_selecionada = st.selectbox("Selecione a OS para análise da IA:", lista_os, index=idx_selecionado)
+        
