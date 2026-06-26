@@ -44,7 +44,7 @@ st.sidebar.write("---")
 arquivo_upload = st.sidebar.file_uploader("📂 Carregar Planilha de Ativos/OM", type=["csv", "xlsx"])
 
 # URL base do Speckle em modo embed
-speckle_base_url = "https://app.speckle.systems/projects/a649da7292/models/815af390c7?embedToken=fd704d8c9c65c33217812bb9e35c7feb7c8d20314f"
+speckle_base_url = "https://speckle.systems"
 
 # Lógica de carregamento de dados segura
 df = pd.DataFrame()
@@ -66,7 +66,7 @@ else:
 # 4. CONFIGURAÇÃO DO ESTADO DA SESSÃO (SESSION STATE)
 if 'os_selecionada' not in st.session_state or st.session_state.os_selecionada not in lista_os:
     if lista_os:
-        st.session_state.os_selecionada = lista_os
+        st.session_state.os_selecionada = lista_os[0]
 
 # 5. CRIAÇÃO DAS ABAS (OS 3 MÓDULOS)
 aba_modelo, aba_produtividade, aba_diagnostico = st.tabs([
@@ -88,7 +88,7 @@ with aba_modelo:
         if col_id:
             linha_ativo = df[df['OS'] == st.session_state.os_selecionada]
             if not linha_ativo.empty:
-                # O .values[0] extrai o texto puro e limpa colchetes da string
+                # O indexador [0] garante que extraímos o texto puríssimo, sem colchetes de listas do pandas
                 id_bim_alvo = str(linha_ativo[col_id].values[0]).strip()
 
     # Se não achar na planilha, usa o ID padrão para fins de demonstração
@@ -96,7 +96,7 @@ with aba_modelo:
         id_bim_alvo = "29e456a92924eb3747bbcd9bb3edd623"
 
     # Aplica o filtro de isolamento e cor vermelha se o toggle estiver ligado
-    if ativar_visao_cromatica and id_bim_alvo:
+    if activar_visao_cromatica and id_bim_alvo:
         url_visualizador = f"{speckle_base_url}&filter=%5B%22{id_bim_alvo}%22%5D&overlay=%5B%7B%22id%22%3A%22{id_bim_alvo}%22%2C%22color%22%3A%22%23FF0000%22%7D%5D"
         st.success(f"🎯 Visão Cromática Ativa: Filtrando e pintando o Ativo BIM {id_bim_alvo}")
     else:
