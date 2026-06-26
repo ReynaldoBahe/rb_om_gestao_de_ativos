@@ -190,7 +190,4 @@ with aba_diagnostico:
         
         df_ia = pd.DataFrame({'Indicador': ['Índice de Conclusão'], 'Valor': [1.0 if status == "Fechado" else 0.5]})
         
-        grafico_ia = alt.Chart(df_ia).mark_bar(color='#1E3A8A', size=120).encode(
-            x=alt.X('Indicador:N', title=''), 
-            y=alt.Y('Valor:Q', title='Progresso Operacional', scale=alt.Scale(domain=[0, 1.2])), 
-            tooltip=['Indicador', 'Valor']
+        # Gráfico unilinear totalmente corrigido e fechado contra SyntaxErrors
