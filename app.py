@@ -164,7 +164,7 @@ with aba_produtividade:
         st.info("💡 Por favor, certifique-se de que a planilha está carregada na barra lateral.")
 
 # ==========================================
-# ABA 3: CENTRO DE DIAGNÓSTICO AVANÇADO
+# ABA 3: CENTRO DE DIAGNÓSTICO AVANÇADO (100% REAL)
 # ==========================================
 with aba_diagnostico:
     st.subheader("🧠 Centro de Diagnóstico Avançado (IA Preditiva)")
@@ -173,41 +173,62 @@ with aba_diagnostico:
     with col_esq:
         st.markdown("🔎 **Seleção de Ativo para Auditoria**")
         
+        idx_selecionado = lista_os.index(st.session_state.os_selecionada) if st.session_state.os_selecionada in lista_os else 0
         st.session_state.os_selecionada = st.selectbox(
             "Selecione a OS para análise da IA:", 
             lista_os, 
-            index=lista_os.index(st.session_state.os_selecionada) if st.session_state.os_selecionada in lista_os else 0
+            index=idx_selecionado,
+            key="selector_diagnostico_real_final"
         )
         
-        resp, setor, status, data_ab = "Pedro", "Climatização", "Fechado", "20/06/2026"
+        # Valores padrão de fallback caso a linha falhe
+        resp, setor, status, data_ab = "Não identificado", "Geral", "Aberto", "20/06/2026"
+        descricao_falha = "Nenhuma descrição detalhada registrada na planilha."
+        criticidade_ativo = "Média"
+        
         if not df.empty and 'OS' in df.columns:
-            dados_os = df[df['OS'] == st.session_state.os_selecionada]
+            dados_os = df[df['OS'].astype(str) == str(st.session_state.os_selecionada)]
             if not dados_os.empty:
                 col_t = next((c for c in df.columns if c.lower() in ['técnico', 'tecnico', 'responsável', 'responsavel']), None)
-                resp = str(dados_os[col_t].values[0]) if col_t else "Pedro"
-                setor = str(dados_os['Setor'].values[0]) if 'Setor' in df.columns else "Climatização"
-                status = str(dados_os['Status'].values[0]) if 'Status' in df.columns else "Fechado"
-                data_ab = str(dados_os['Data_Abertura'].values[0]) if 'Data_Abertura' in df.columns else "20/06/2026"
+                resp = str(dados_os[col_t].squeeze()) if col_t else "Pedro"
+                setor = str(dados_os['Setor'].squeeze()) if 'Setor' in df.columns else "Climatização"
+                status = str(dados_os['Status'].squeeze()) if 'Status' in df.columns else "Fechado"
+                data_ab = str(dados_os['Data_Abertura'].squeeze()) if 'Data_Abertura' in df.columns else "20/06/2026"
+                
+                # BUSCA DINÂMICA DA OCORRÊNCIA REAL (Procura colunas como Descrição, Ocorrência, Falha)
+                col_desc = next((c for c in df.columns if c.lower() in ['descrição', 'descricao', 'ocorrência', 'ocorrencia', 'falha']), None)
+                if col_desc:
+                    descricao_falha = str(dados_os[col_desc].squeeze())
+                
+                # BUSCA DINÂMICA DA CRITICIDADE REAL
+                col_crit = next((c for c in df.columns if 'CRITIC' in c.upper()), None)
+                if col_crit:
+                    criticidade_ativo = str(dados_os[col_crit].squeeze())
 
         html_ficha = '<div class="ficha-tecnica"><h4 style="margin-top:0; color:#1E3A8A;">📋 Ficha Técnica do Ativo</h4><ul>'
         html_ficha += f'<li><b>ID BIM:</b> {id_bim_alvo}</li>'
         html_ficha += f'<li><b>Responsável Técnico:</b> {resp}</li>'
         html_ficha += f'<li><b>Setor:</b> {setor}</li>'
         html_ficha += f'<li><b>Status Atual:</b> {status}</li>'
-        html_ficha += f'<li><b>Data de Abertura:</b> {data_ab}</li>'
-        html_ficha += '<li><b>Histórico de Quebras:</b> 3 recorrências registradas nos últimos 180 dias.</li></ul>'
-        html_ficha += '<a href="#" style="color:#2563EB; font-weight:bold; text-decoration:none;">📄 Acessar Manual Técnico do Ativo</a></div>'
+        html_ficha += f'<li><b>Criticidade Real:</b> {criticidade_ativo}</li>'
+        html_ficha += f'<li><b>Data de Abertura:</b> {data_ab}</li></ul>'
+        html_ficha += f'<hr style="border:0; border-top:1px solid #BFDBFE; margin:10px 0;"><p style="margin:0; font-size:13px; color:#1E40AF;"><b>Ocorrência Registrada na Planilha:</b> {descricao_falha}</p>'
+        html_ficha += '<br><a href="#" style="color:#2563EB; font-weight:bold; text-decoration:none;">📄 Acessar Manual Técnico do Ativo</a></div>'
         st.markdown(html_ficha, unsafe_allow_html=True)
         
     with col_dir:
         st.markdown("⚡ **Análise de Engenharia Operacional da IA**")
         
-        mensagem_ia = f"**ANÁLISE COMPLEMENTAR:** Ordem {st.session_state.os_selecionada}. Ativo BIM analisado sob status '{status}'. Plano recomendado para {setor}."
+        # Frase da IA reativa e baseada estritamente na criticidade e setor da planilha
+        mensagem_ia = f"**ANÁLISE COMPLEMENTAR:** Ordem {st.session_state.os_selecionada}. Ativo BIM analisado sob status '{status}' e criticidade '{criticidade_ativo}'. Plano operacional recomendado para o subsistema de {setor}."
         st.success(mensagem_ia)
         
-        df_ia = pd.DataFrame({'Métrica': ['Ordens Analisadas'], 'Valor': [1.0]})
+        # Gráfico dinâmico: Se a OS estiver Fechada o progresso é 1.0 (100%), se não é 0.5 (50%)
+        valor_progresso = 1.0 if str(status).lower() in ['fechado', 'concluído', 'concluido'] else 0.5
+        df_ia = pd.DataFrame({'Métrica': ['Status de Execução'], 'Valor': [valor_progresso]})
+        
         grafico_ia = alt.Chart(df_ia).mark_bar(color='#1f77b4', size=150).encode(
             x=alt.X('Métrica:N', title=''),
-            y=alt.Y('Valor:Q', title='Status de Execução', scale=alt.Scale(domain=[0, 1.2])),
+            y=alt.Y('Valor:Q', title='Progresso Operacional', scale=alt.Scale(domain=[0, 1.2])),
         ).properties(height=250)
         st.altair_chart(grafico_ia, use_container_width=True)
