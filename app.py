@@ -44,7 +44,7 @@ st.sidebar.write("---")
 arquivo_upload = st.sidebar.file_uploader("📂 Carregar Planilha de Ativos/OM", type=["csv", "xlsx"])
 
 # URL base do Speckle em modo embed
-speckle_base_url = "https://app.speckle.systems/projects/a649da7292/models/815af390c7?embedToken=fd704d8c9c65c33217812bb9e35c7feb7c8d20314f"
+speckle_base_url = "https://speckle.systems"
 
 # Lógica de carregamento de dados segura
 df = pd.DataFrame()
@@ -86,16 +86,16 @@ with aba_modelo:
     if not df.empty and 'OS' in df.columns:
         col_id = next((c for c in df.columns if c.upper() == 'ID'), None)
         if col_id:
-                        linha_ativo = df[df['OS'] == st.session_state.os_selecionada]
+            linha_ativo = df[df['OS'] == st.session_state.os_selecionada]
             if not linha_ativo.empty:
-                id_bim_alvo = str(linha_ativo[col_id].iloc[0]).strip()
-
+                # O .values[0] extrai o texto puro e limpa colchetes da string
+                id_bim_alvo = str(linha_ativo[col_id].values[0]).strip()
 
     # Se não achar na planilha, usa o ID padrão para fins de demonstração
-    if not id_bim_alvo:
+    if not id_bim_alvo or id_bim_alvo == "nan":
         id_bim_alvo = "29e456a92924eb3747bbcd9bb3edd623"
 
-    # Corrigido aqui para usar 'ativar_visao_cromatica' com 'i' igual à linha 40
+    # Aplica o filtro de isolamento e cor vermelha se o toggle estiver ligado
     if ativar_visao_cromatica and id_bim_alvo:
         url_visualizador = f"{speckle_base_url}&filter=%5B%22{id_bim_alvo}%22%5D&overlay=%5B%7B%22id%22%3A%22{id_bim_alvo}%22%2C%22color%22%3A%22%23FF0000%22%7D%5D"
         st.success(f"🎯 Visão Cromática Ativa: Filtrando e pintando o Ativo BIM {id_bim_alvo}")
@@ -175,10 +175,10 @@ with aba_diagnostico:
             dados_os = df[df['OS'] == st.session_state.os_selecionada]
             if not dados_os.empty:
                 col_t = next((c for c in df.columns if c.lower() in ['técnico', 'tecnico', 'responsável', 'responsavel']), None)
-                resp = str(dados_os[col_t].values) if col_t else "Pedro"
-                setor = str(dados_os['Setor'].values) if 'Setor' in df.columns else "Climatização"
-                status = str(dados_os['Status'].values) if 'Status' in df.columns else "Fechado"
-                data_ab = str(dados_os['Data_Abertura'].values) if 'Data_Abertura' in df.columns else "20/06/2026"
+                resp = str(dados_os[col_t].values[0]) if col_t else "Pedro"
+                setor = str(dados_os['Setor'].values[0]) if 'Setor' in df.columns else "Climatização"
+                status = str(dados_os['Status'].values[0]) if 'Status' in df.columns else "Fechado"
+                data_ab = str(dados_os['Data_Abertura'].values[0]) if 'Data_Abertura' in df.columns else "20/06/2026"
 
         # HTML montado por concatenação segura
         html_ficha = '<div class="ficha-tecnica"><h4 style="margin-top:0; color:#1E3A8A;">📋 Ficha Técnica do Ativo</h4><ul>'
