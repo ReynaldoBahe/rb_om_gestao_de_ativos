@@ -189,10 +189,8 @@ with aba_produtividade:
         st.info("💡 Por favor, certifique-se de que a planilha está carregada na barra lateral.")
 
 # ==========================================
-# ABA 3: CENTRO DE DIAGNÓSTICO (ESTÁVEL E REATIVA)
+# ABA 3: CENTRO DE DIAGNÓSTICO (ESTÁVEL E SEM WITH COL)
 # ==========================================
 with aba_diagnostico:
     st.subheader("🧠 Centro de Diagnóstico Avançado (IA Preditiva)")
-    col_esq, col_dir = st.columns(2)
     
-    with col_esq:
