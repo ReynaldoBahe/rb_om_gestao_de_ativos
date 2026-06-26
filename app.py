@@ -26,7 +26,7 @@ st.markdown("""
 
 st.markdown('<div class="main-title">🏗️ Portal de Engenharia & Gestão de Projetos</div>', unsafe_allow_html=True)
 
-# 3. BARRA LATERAL (FILTROS CONSOLIDADOS - SEM SETOR)
+# 3. BARRA LATERAL (FILTROS CONSOLIDADOS)
 st.sidebar.header("Filtros de Visão")
 
 # Filtros por caixas de seleção
@@ -35,10 +35,10 @@ filtro_criticidade = st.sidebar.selectbox("Filtrar por Criticidade:", ["Todos", 
 filtro_tempo = st.sidebar.selectbox("Filtrar por Tempo Aberta:", ["Todos", "Menos de 24h", "Entre 2 e 7 dias", "Mais de 7 dias"])
 
 st.sidebar.write("---")
-st.sidebar.header("🎨 Filtro de Cores no Modelo (BIM)")
+st.sidebar.header("🔍 Localização de Ativos (BIM)")
 
-# Interruptor de ativação do isolamento no modelo (Nome correto e único)
-ativar_visao_cromatica = st.sidebar.toggle("🔴 Ativar Visão Cromática por Ativo Selecionado")
+# Texto do botão atualizado para corresponder perfeitamente à função comercial
+ativar_visao_cromatica = st.sidebar.toggle("🎯 Identificar ID do Ativo no Modelo")
 
 st.sidebar.write("---")
 arquivo_upload = st.sidebar.file_uploader("📂 Carregar Planilha de Ativos/OM", type=["csv", "xlsx"])
@@ -87,17 +87,15 @@ with aba_modelo:
         if col_id:
             linha_ativo = df[df['OS'] == st.session_state.os_selecionada]
             if not linha_ativo.empty:
-                # O .values extrai a string pura diretamente da tabela
                 id_bim_alvo = str(linha_ativo[col_id].values).strip()
 
-    # Se não achar na planilha ou der erro, usa o ID padrão do resort para o teste funcionar
     if not id_bim_alvo or id_bim_alvo == "nan" or "Array" in id_bim_alvo:
         id_bim_alvo = "29e456a92924eb3747bbcd9bb3edd623"
 
-    # Verificação unificada com a variável 'ativar_visao_cromatica'
+    # Lógica de rastreabilidade textual ativa
     if ativar_visao_cromatica and id_bim_alvo:
         url_visualizador = f"{speckle_base_url}&filter=%5B%22{id_bim_alvo}%22%5D"
-        st.success(f"🎯 Isolamento Ativo: Focando no componente BIM {id_bim_alvo}")
+        st.success(f"🎯 ID Mapeado com Sucesso: Use o ID `{id_bim_alvo}` na busca do modelo para focar no ativo.")
     else:
         url_visualizador = speckle_base_url
         st.markdown("ℹ️ *Visualização padrão do modelo de engenharia.*")
@@ -190,8 +188,12 @@ with aba_diagnostico:
     with col_dir:
         st.markdown("⚡ **Análise de Engenharia Operacional da IA**")
         
-        # Substituído por aspas simples lineares para eliminar de vez o erro de compilação da f-string
         mensagem_ia = f"**ANÁLISE COMPLEMENTAR:** Ordem {st.session_state.os_selecionada}. Ativo BIM analisado sob status '{status}'. Plano recomendado para {setor}."
         st.success(mensagem_ia)
         
         df_ia = pd.DataFrame({'Métrica': ['Ordens Analisadas'], 'Valor': [1.0]})
+        grafico_ia = alt.Chart(df_ia).mark_bar(color='#1f77b4', size=150).encode(
+            x=alt.X('Métrica:N', title=''),
+            y=alt.Y('Valor:Q', title='Status de Execução', scale=alt.Scale(domain=[0, 1.2])),
+        ).properties(height=250)
+        st.altair_chart(grafico_ia, use_container_width=True)
