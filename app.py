@@ -35,7 +35,7 @@ def obter_token_autodesk(client_id, client_secret):
 st.sidebar.image("https://flaticon.com", width=80)
 st.sidebar.title("Configurações do Painel")
 
-link_speckle_padrao = "https://speckle.systems"
+link_speckle_padrao = "https://app.speckle.systems/projects/a649da7292/models/815af390c7?embedToken=a4a8c1dcd53b0cd8565611e886a1f8f7701bf67c79"
 link_cliente = st.sidebar.text_input("🔗 Link do Speckle (Cliente):", value=link_speckle_padrao)
 
 st.sidebar.markdown("---")
