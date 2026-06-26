@@ -65,7 +65,7 @@ else:
 # Configuração estável do estado da sessão
 if 'os_selecionada' not in st.session_state or st.session_state.os_selecionada not in lista_os:
     if lista_os:
-        st.session_state.os_selecionada = lista_os[0]
+        st.session_state.os_selecionada = lista_os
 
 # ==========================================
 # 5. CRIAÇÃO DAS ABAS (OS 3 MÓDULOS)
@@ -77,7 +77,7 @@ aba_modelo, aba_produtividade, aba_diagnostico = st.tabs([
 ])
 
 # -------------------------------------------------------------------------
-# PROCESSAMENTO DE VARIÁVEIS GLOBAIS CORRIGIDO CONTRA DTYPE/ARRAY (ABAS 2 E 3 REATIVAS)
+# PROCESSAMENTO SEGURO DE VARIÁVEIS GLOBAIS CORRIGIDO (LIMPA TEXTOS ARRAYS)
 # -------------------------------------------------------------------------
 id_bim_alvo = "29e456a92924eb3747bbcd9bb3edd623"
 resp = "Pedro"
@@ -92,7 +92,6 @@ if not df.empty and 'OS' in df.columns:
     if not dados_os.empty:
         col_id = next((c for c in df.columns if c.upper() == 'ID'), None)
         if col_id:
-            # O uso de .values[0] extrai estritamente a string limpa, eliminando o erro de "Length: 1, dtype: str"
             id_bim_alvo = str(dados_os[col_id].values[0]).strip()
         col_t = next((c for c in df.columns if c.lower() in ['técnico', 'tecnico', 'responsável', 'responsavel']), None)
         resp = str(dados_os[col_t].values[0]) if col_t else "Pedro"
@@ -127,7 +126,7 @@ with aba_modelo:
         }
         .card-inspecao-local h4 { color: #1E3A8A; margin: 0 0 10px 0; font-size: 16px; font-family: sans-serif; }
         .card-inspecao-local p { margin: 6px 0; font-size: 13px; color: #334155; font-family: sans-serif; line-height: 1.4; }
-    </style>
+        </style>
     """, unsafe_allow_html=True)
     
     # Renderiza o cartão de apoio técnico de forma limpa na barra lateral cinza
@@ -192,3 +191,6 @@ with aba_produtividade:
         st.markdown('📋 **Relatório Sincronizado de Ordens de Serviço**')
         st.dataframe(df_filtrado, use_container_width=True)
     else:
+        st.info("💡 Por favor, certifique-se de que a planilha está carregada na barra lateral.")
+
+# ==========================================
