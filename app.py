@@ -37,7 +37,7 @@ filtro_tempo = st.sidebar.selectbox("Filtrar por Tempo Aberta:", ["Todos", "Meno
 st.sidebar.write("---")
 st.sidebar.header("🎨 Filtro de Cores no Modelo (BIM)")
 
-# Variável padronizada com 'i' em todo o arquivo
+# Nome padrão correto: ativar_visao_cromatica
 ativar_visao_cromatica = st.sidebar.toggle("🔴 Ativar Visão Cromática por Ativo Selecionado")
 
 st.sidebar.write("---")
@@ -88,15 +88,15 @@ with aba_modelo:
         if col_id:
             linha_ativo = df[df['OS'] == st.session_state.os_selecionada]
             if not linha_ativo.empty:
-                # O indexador [0] garante que extraímos o texto puríssimo, sem colchetes de listas do pandas
+                # Pegando o primeiro elemento [0] para enviar a string limpa sem colchetes
                 id_bim_alvo = str(linha_ativo[col_id].values[0]).strip()
 
     # Se não achar na planilha, usa o ID padrão para fins de demonstração
     if not id_bim_alvo or id_bim_alvo == "nan":
         id_bim_alvo = "29e456a92924eb3747bbcd9bb3edd623"
 
-    # Aplica o filtro de isolamento e cor vermelha se o toggle estiver ligado
-    if activar_visao_cromatica and id_bim_alvo:
+    # Verificação com a variável corrigida: ativar_visao_cromatica
+    if ativar_visao_cromatica and id_bim_alvo:
         url_visualizador = f"{speckle_base_url}&filter=%5B%22{id_bim_alvo}%22%5D&overlay=%5B%7B%22id%22%3A%22{id_bim_alvo}%22%2C%22color%22%3A%22%23FF0000%22%7D%5D"
         st.success(f"🎯 Visão Cromática Ativa: Filtrando e pintando o Ativo BIM {id_bim_alvo}")
     else:
