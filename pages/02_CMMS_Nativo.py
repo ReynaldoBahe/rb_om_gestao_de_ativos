@@ -183,4 +183,28 @@ if condicao.any():
             st.session_state['dados_os'] = df_mestre
             st.success(f"📊 Status da {os_selecionada} modificado para '{novo_status}' com sucesso!")
             st.rerun()
+# --------------------------------------------------------
+# 🗑️ PAINEL DE ADMINISTRAÇÃO E EXCLUSÃO PERMANENTE
+# --------------------------------------------------------
+st.markdown("---")
+st.subheader("🗑️ Painel de Administração — Excluir Opções das Caixas")
+st.write("Utilize esta área para remover permanentemente opções obsoletas ou incorretas da planilha mestre.")
+
+adm_col1, adm_col2 = st.columns(2)
+with adm_col1:
+    categoria_excluir = st.selectbox("1. Escolha o campo que deseja higienizar:", ["Responsavel", "Setor", "Tipo_manutencao", "Causa_Raiz"])
+with adm_col2:
+    # Filtra as strings únicas existentes na tabela para aquela categoria
+    itens_existentes = sorted(list(set([str(x).strip() for x in df[categoria_excluir].unique() if str(x).strip() not in ["", "nan"]])))
+    item_para_apagar = st.selectbox("2. Selecione a opção específica para remover do sistema:", itens_existentes)
+
+if st.button("❌ Executar Exclusão Permanente"):
+    df_mestre = st.session_state['dados_os']
+    
+    # Remove ou substitui o valor da opção deletada por um texto padrão limpo
+    df_mestre.loc[df_mestre[categoria_excluir] == item_para_apagar, categoria_excluir] = "Não Informado"
+    
+    st.session_state['dados_os'] = df_mestre
+    st.success(f"🧼 A opção '{item_para_apagar}' foi deletada com sucesso! Os menus e gráficos já foram recalculados.")
+    st.rerun()
 
