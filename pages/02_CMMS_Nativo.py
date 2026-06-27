@@ -47,23 +47,18 @@ for col in ['Pecas_substituidas', 'Causa_Raiz', 'Data_Fechamento', 'Setor', 'Tip
     df[col] = df[col].fillna("").astype(str)
 
 # --------------------------------------------------------
-# CAIXA 1: REGISTRO DE NOVA OS (MENUS DINÂMICOS COMPLETOS)
+# CAIXA 1: REGISTRO DE NOVA OS (MENUS DINÂMICOS CORRIGIDOS)
 # --------------------------------------------------------
 st.subheader("➕ Registrar Nova Ordem de Serviço")
 
-# 1. Montagem dinâmica do Setor
+# Montagem das opções extraídas da planilha
 setores_existentes = sorted(list(set([str(s).strip() for s in df['Setor'].unique() if str(s).strip() not in ["", "nan"]])))
-if not setores_existentes: setores_existentes = ["Climatização", "Elétrica", "Hidráulica", "Mecânica", "Civil"]
 opcoes_setor = setores_existentes + ["➕ Cadastrar Outro Setor..."]
 
-# 2. Montagem dinâmica do Tipo de Manutenção
 tipos_existentes = sorted(list(set([str(t).strip() for t in df['Tipo_manutencao'].unique() if str(t).strip() not in ["", "nan"]])))
-if not tipos_existentes: tipos_existentes = ["Corretiva", "Preventiva", "Preditiva"]
 opcoes_tipo = tipos_existentes + ["➕ Cadastrar Outro Tipo..."]
 
-# 3. Montagem dinâmica do Profissional Técnico
 tecnicos_existentes = sorted(list(set([str(r).strip() for r in df['Responsavel'].unique() if str(r).strip() not in ["", "nan"]])))
-if not tecnicos_existentes: tecnicos_existentes = ["Pedro", "Marcos", "Tiago", "Francisco", "Joaquim"]
 opcoes_tecnico = tecnicos_existentes + ["➕ Cadastrar Outro Técnico..."]
 
 with st.form("form_nova_os", clear_on_submit=True):
@@ -72,29 +67,33 @@ with st.form("form_nova_os", clear_on_submit=True):
         st.text_input("Código da OS (Automático)", value=f"OS-2026-{len(df) + 1:03d}", disabled=True)
         id_bim = st.text_input("ID BIM do Ativo (Speckle)", value="29e456...")
         
-        # Seletor de Setor
         setor_selecionado = st.selectbox("Setor Responsável", opcoes_setor)
-        novo_setor_input = ""
-        if setor_selecionado == "➕ Cadastrar Outro Setor...":
-            novo_setor_input = st.text_input("Digite o nome do NOVO Setor:", placeholder="Ex: Telecom, Incêndio...")
-            
-        # Seletor de Tipo de Manutenção
         tipo_selecionado = st.selectbox("Tipo de Manutenção", opcoes_tipo)
-        novo_tipo_input = ""
-        if tipo_selecionado == "➕ Cadastrar Outro Tipo...":
-            novo_tipo_input = st.text_input("Digite o nome do NOVO Tipo de Manutenção:", placeholder="Ex: Melhoria, Instalação, Calibração...")
-            
-        # Seletor de Técnico
         tecnico_selecionado = st.selectbox("Profissional Técnico", opcoes_tecnico)
-        novo_tecnico_input = ""
-        if tecnico_selecionado == "➕ Cadastrar Outro Técnico...":
-            novo_tecnico_input = st.text_input("Digite o nome do NOVO Profissional Técnico:", placeholder="Ex: Lucas, André, Carlos...")
         
     with col2:
         criticidade = st.selectbox("Grau de Criticidade", ["Alta", "Média", "Baixa"])
         sintoma = st.text_area("Sintoma Detalhado / Descrição do Problema", placeholder="Descreva o comportamento anômalo encontrado...")
         link_manual = st.text_input("Link do Manual Técnico (URL)", value="")
         id_sonoff = st.text_input("ID do Sensor Sonoff Vinculado", value="Não Vinculado")
+
+    # 💡 AJUSTE VISUAL: Os campos extras agora ficam organizados em colunas limpas abaixo dos seletores
+    novo_setor_input = ""
+    novo_tipo_input = ""
+    novo_tecnico_input = ""
+    
+    if "➕ Cadastrar Outro Setor..." in setor_selecionado or "➕ Cadastrar Outro Tipo..." in tipo_selecionado or "➕ Cadastrar Outro Técnico..." in tecnico_selecionado:
+        st.info("📝 Preencha os campos abaixo para os novos cadastros detectados:")
+        c_inst1, c_inst2, c_inst3 = st.columns(3)
+        with c_inst1:
+            if setor_selecionado == "➕ Cadastrar Outro Setor...":
+                novo_setor_input = st.text_input("Nome do NOVO Setor:")
+        with c_inst2:
+            if tipo_selecionado == "➕ Cadastrar Outro Tipo...":
+                novo_tipo_input = st.text_input("Nome do NOVO Tipo:")
+        with c_inst3:
+            if tecnico_selecionado == "➕ Cadastrar Outro Técnico...":
+                novo_tecnico_input = st.text_input("Nome do NOVO Técnico:")
         
     btn_registrar = st.form_submit_button("💾 Registrar OS no Sistema")
     
@@ -139,11 +138,11 @@ os_selecionada = st.selectbox("Selecione uma OS para dar baixa ou alterar status
 condicao = df['OS'] == os_selecionada
 
 if condicao.any():
-    status_atual = str(df.loc[condicao, 'Status'].values).strip()
-    pecas_atuais = df.loc[condicao, 'Pecas_substituidas'].values
+    status_atual = str(df.loc[condicao, 'Status'].values[0]).strip()
+    pecas_atuais = df.loc[condicao, 'Pecas_substituidas'].values[0]
     pecas_texto = "" if pd.isna(pecas_atuais) or str(pecas_atuais).lower() in ["nan", ""] else str(pecas_atuais)
     
-    causa_atual = str(df.loc[condicao, 'Causa_Raiz'].values).strip()
+    causa_atual = str(df.loc[condicao, 'Causa_Raiz'].values[0]).strip()
     
     causas_na_planilha = [c for c in df['Causa_Raiz'].unique() if c.strip() not in ["", "nan", "Pendente de Análise"]]
     causas_base = ["Desgaste Natural", "Falha Elétrica", "Erro Operacional", "Falha Mecânica", "Corretiva por Vazamento"]
@@ -180,3 +179,7 @@ if condicao.any():
             if novo_status == "Fechado":
                 df_mestre.loc[condicao_mestre, 'Data_Fechamento'] = pd.Timestamp.now().strftime('%d/%m/%Y %H:%M:%S')
                 
+            st.session_state['dados_os'] = df_mestre
+            st.success(f"📊 Status da {os_selecionada} modificado para '{novo_status}' com sucesso!")
+            st.rerun()
+
