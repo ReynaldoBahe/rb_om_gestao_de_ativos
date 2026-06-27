@@ -21,7 +21,9 @@ for chave in ['dados_os', 'df_filtrado', 'df', 'df_os']:
 if df_base.empty:
     try:
         # Lê o seu CSV padrão que está na raiz do GitHub
-        df_base = pd.read_csv("CMMS_Export_RB.csv")
+        # Mude a linha 24 para ler exatamente o nome que o Google gerou:
+df_base = pd.read_csv("CMMS_Export_RB - CMMS_RB.csv")
+
         st.session_state['dados_os'] = df_base
     except Exception:
         try:
@@ -32,7 +34,7 @@ if df_base.empty:
 
 # 3. VERIFICAÇÃO FINAL DE SEGURANÇA
 if df_base.empty:
-    st.warning("⚠️ Certifique-se de que o arquivo 'CMMS_Export_RB.csv' está na raiz do seu repositório GitHub para liberar o CMMS Nativo.")
+    st.warning("⚠️ Certifique-se de que o arquivo 'CMMS_Export_RB - CMMS_RB.csv' está na raiz do seu repositório GitHub para liberar o CMMS Nativo.")
 else:
     # Cria uma cópia limpa para manipulação
     df = df_base.copy()
