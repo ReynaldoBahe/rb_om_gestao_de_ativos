@@ -41,7 +41,7 @@ if 'dados_os' not in st.session_state or st.session_state['dados_os'].empty:
 
 df = st.session_state['dados_os'].astype(object)
 
-for col in ['Pecas_substituidas', 'Causa_Raiz', 'Data_Fechamento', 'Setor', 'Tipo_manutencao']:
+for col in ['Pecas_substituidas', 'Causa_Raiz', 'Data_Fechamento', 'Setor', 'Tipo_manutencao', 'Responsavel']:
     if col not in df.columns:
         df[col] = ""
     df[col] = df[col].fillna("").astype(str)
@@ -56,10 +56,15 @@ setores_existentes = sorted([s for s in df['Setor'].unique() if s.strip() != ""]
 if not setores_existentes: setores_existentes = ["Climatização", "Elétrica", "Hidráulica", "Mecânica", "Civil"]
 opcoes_setor = setores_existentes + ["➕ Cadastrar Outro Setor..."]
 
-# 2. 🔥 NOVIDADE: Montagem dinâmica do Tipo de Manutenção
+# 2. Montagem dinâmica do Tipo de Manutenção
 tipos_existentes = sorted([t for t in df['Tipo_manutencao'].unique() if t.strip() != ""])
 if not tipos_existentes: tipos_existentes = ["Corretiva", "Preventiva", "Preditiva"]
 opcoes_tipo = tipos_existentes + ["➕ Cadastrar Outro Tipo..."]
+
+# 3. 🔥 NOVIDADE: Montagem dinâmica do Profissional Técnico
+tecnicos_existentes = sorted([r for r in df['Responsavel'].unique() if r.strip() != ""])
+if not tecnicos_existentes: tecnicos_existentes = ["Pedro", "Marcos", "Tiago", "Francisco", "Joaquim"]
+opcoes_tecnico = tecnicos_existentes + ["➕ Cadastrar Outro Técnico..."]
 
 with st.form("form_nova_os", clear_on_submit=True):
     col1, col2 = st.columns(2)
@@ -73,13 +78,17 @@ with st.form("form_nova_os", clear_on_submit=True):
         if setor_selecionado == "➕ Cadastrar Outro Setor...":
             novo_setor_input = st.text_input("Digite o nome do NOVO Setor:", placeholder="Ex: Telecom, Incêndio...")
             
-        # 🔥 Seletor Dinâmico de Tipo de Manutenção
+        # Seletor de Tipo de Manutenção
         tipo_selecionado = st.selectbox("Tipo de Manutenção", opcoes_tipo)
         novo_tipo_input = ""
         if tipo_selecionado == "➕ Cadastrar Outro Tipo...":
-            novo_tipo_input = st.text_input("Digite o NOVO Tipo de Manutenção:", placeholder="Ex: Melhoria, Instalação, Calibração...")
+            novo_tipo_input = st.text_input("Digite o NOVO Tipo de Manutenção:", placeholder="Ex: Melhoria, Instalação...")
             
-        responsavel = st.selectbox("Profissional Técnico", ["Pedro", "Marcos", "Tiago", "Francisco", "Joaquim"])
+        # 🔥 Seletor Dinâmico de Profissional Técnico
+        tecnico_selecionado = st.selectbox("Profissional Técnico", opcoes_tecnico)
+        novo_tecnico_input = ""
+        if tecnico_selecionado == "➕ Cadastrar Outro Técnico...":
+            novo_tecnico_input = st.text_input("Digite o nome do NOVO Profissional Técnico:", placeholder="Ex: Lucas, André, Carlos...")
         
     with col2:
         criticidade = st.selectbox("Grau de Criticidade", ["Alta", "Média", "Baixa"])
@@ -96,16 +105,19 @@ with st.form("form_nova_os", clear_on_submit=True):
             st.error("⚠️ Por favor, digite o nome do novo setor.")
         elif tipo_selecionado == "➕ Cadastrar Outro Tipo..." and not novo_tipo_input.strip():
             st.error("⚠️ Por favor, digite o nome do novo tipo de manutenção.")
+        elif tecnico_selecionado == "➕ Cadastrar Outro Técnico..." and not novo_tecnico_input.strip():
+            st.error("⚠️ Por favor, digite o nome do novo profissional técnico.")
         else:
             setor_final = novo_setor_input.strip() if setor_selecionado == "➕ Cadastrar Outro Setor..." else setor_selecionado
             tipo_final = novo_tipo_input.strip() if tipo_selecionado == "➕ Cadastrar Outro Tipo..." else tipo_selecionado
+            tecnico_final = novo_tecnico_input.strip() if tecnico_selecionado == "➕ Cadastrar Outro Técnico..." else tecnico_selecionado
             
             novo_registro = {
                 'OS': f"OS-2026-{len(df) + 1:03d}", 'ID': id_bim,
                 'Data_Abertura': pd.Timestamp.now().strftime('%d/%m/%Y %H:%M:%S'), 'Data_Fechamento': '',
                 'Descrição': f"Atendimento nativo criado via portal para setor de {setor_final}.",
-                'Status': 'Aberta', 'Setor': setores_existentes, 'Tipo_manutencao': tipo_final,
-                'Responsavel': responsavel, 'Criticidade': criticidade,
+                'Status': 'Aberta', 'Setor': setor_final, 'Tipo_manutencao': tipo_final,
+                'Responsavel': tecnico_final, 'Criticidade': criticidade,
                 'Sintoma_detalhado': sintoma, 'Pecas_substituidas': '',
                 'link_manual_tecnico': link_manual, 'Custo_Material': 0.0,
                 'Custo_Mao_Obra': 0.0, 'ID_Sonoff': id_sonoff, 'Tempo_Parado_Horas': 0, 'Causa_Raiz': 'Pendente de Análise'
@@ -169,19 +181,3 @@ if condicao.any():
                 df_mestre.loc[condicao_mestre, 'Data_Fechamento'] = pd.Timestamp.now().strftime('%d/%m/%Y %H:%M:%S')
                 
             st.session_state['dados_os'] = df_mestre
-            st.success(f"📊 Status da {os_selecionada} modificado para '{novo_status}' com sucesso!")
-            st.rerun()
-
-# --------------------------------------------------------
-# CAIXA 3: EXPORTAÇÃO DOS DADOS ATUALIZADOS
-# --------------------------------------------------------
-st.markdown("---")
-st.subheader("💾 Exportar Banco de Dados Atualizado")
-
-csv_data = st.session_state['dados_os'].to_csv(index=False).encode('utf-8')
-st.download_button(
-    label="📥 Baixar Planilha CMMS Atualizada (.CSV)",
-    data=csv_data,
-    file_name="CMMS_Export_RB_Atualizado.csv",
-    mime="text/csv"
-)
