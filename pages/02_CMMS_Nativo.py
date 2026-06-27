@@ -53,7 +53,7 @@ if 'txt_manual' not in st.session_state: st.session_state['txt_manual'] = ""
 if 'txt_sonoff' not in st.session_state: st.session_state['txt_sonoff'] = "Não Vinculado"
 
 # --------------------------------------------------------
-# CAIXA 1: REGISTRO DE NOVA OS (SEM CONFLITOS DE ST.FORM)
+# CAIXA 1: REGISTRO DE NOVA OS
 # --------------------------------------------------------
 st.subheader("➕ Registrar Nova Ordem de Serviço")
 
@@ -67,7 +67,7 @@ with col1:
     
 with col2:
     criticidade = st.selectbox("Grau de Criticidade", ["Alta", "Média", "Baixa"])
-    sintoma = st.text_area("Sintoma Detalhado / Descrição do Problema", key='txt_sintoma', placeholder="Descreva o comportamento anômalo...")
+    sintoma = st.text_area("Sintoma Detalhado / Descrição do Problema", key='txt_sintoma', placeholder="Descreva o comportamento anômalo encontrado...")
     link_manual = st.text_input("Link do Manual Técnico (URL)", key='txt_manual')
     id_sonoff = st.text_input("ID do Sensor Sonoff Vinculado", key='txt_sonoff')
 
@@ -78,8 +78,8 @@ if st.button("💾 Registrar OS no Sistema"):
         novo_registro = {
             'OS': f"OS-2026-{len(df) + 1:03d}", 'ID': id_bim,
             'Data_Abertura': pd.Timestamp.now().strftime('%d/%m/%Y %H:%M:%S'), 'Data_Fechamento': '',
-            'Descrição': f"Atendimento nativo criado via portal para setor de {setor}.",
-            'Status': 'Aberta', 'Setor': sector, 'Tipo_manutencao': tipo_manutencao,
+            'Descrição': f"Atendimento nativo criado via portal para sector de {setor}.",
+            'Status': 'Aberta', 'Setor': setor, 'Tipo_manutencao': tipo_manutencao,
             'Responsavel': responsavel, 'Criticidade': criticidade,
             'Sintoma_detalhado': sintoma, 'Pecas_substituidas': '',
             'link_manual_tecnico': link_manual, 'Custo_Material': 0.0,
@@ -89,7 +89,7 @@ if st.button("💾 Registrar OS no Sistema"):
         # Grava na tabela mestre global
         st.session_state['dados_os'] = pd.concat([st.session_state['dados_os'], pd.DataFrame([novo_registro])], ignore_index=True)
         
-        # 🔥 O SEGREDO TÉCNICO: Força a limpeza das caixas de texto para a próxima entrada
+        # Força a limpeza das caixas de texto para a próxima entrada
         st.session_state['txt_sintoma'] = ""
         st.session_state['txt_manual'] = ""
         st.session_state['txt_sonoff'] = "Não Vinculado"
