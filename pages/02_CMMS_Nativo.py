@@ -8,27 +8,38 @@ st.markdown('### 🛠️ CMMS Proprietário — Gestão de Ordens de Serviço')
 st.write("Abra e controle ordens de serviço de forma nativa e integrada ao ecossistema.")
 
 # 🔗 CONEXÃO COM O BANCO DE DADOS EM MEMÓRIA DO PORTAL
-# 1. Tenta buscar o DataFrame mestre atualizado da sessão global
-if 'dados_os' in st.session_state:
-    df_base = st.session_state['dados_os']
-elif 'df_filtrado' in st.session_state:
-    df_base = st.session_state['df_filtrado']
-else:
-    df_base = pd.DataFrame()
+# 🔗 CONEXÃO COM O BANCO DE DADOS EM MEMÓRIA OU ARQUIVO LOCAL
+df_base = pd.DataFrame()
 
-# 2. SE A MEMÓRIA ESTIVER VAZIA: Tentamos carregar o arquivo físico padrão para o app não quebrar
+# 1. Tenta buscar das variáveis de sessão conhecidas
+for chave in ['dados_os', 'df_filtrado', 'df', 'df_os']:
+    if chave in st.session_state and isinstance(st.session_state[chave], pd.DataFrame):
+        if not st.session_state[chave].empty:
+            df_base = st.session_state[chave]
+            break
+
+# 2. SE CONTINUAR VAZIO: Lê direto o arquivo físico do seu repositório para nunca quebrar
 if df_base.empty:
     try:
-        # Altere o nome abaixo para o caminho exato do seu arquivo CSV padrão se necessário
+        # Lê o seu CSV padrão que está na raiz do GitHub
         df_base = pd.read_csv("CMMS_Export_RB.csv")
+        # Alimenta a sessão global para sincronizar com as outras abas
         st.session_state['dados_os'] = df_base
     except Exception:
-        pass
+        # Se falhar o CSV, tenta ler se por acaso tiver um Excel com o mesmo nome
+        try:
+            df_base = pd.read_excel("CMMS_Export_RB.xlsx")
+            st.session_state['dados_os'] = df_base
+        except Exception:
+            pass
 
-# 3. VERIFICAÇÃO FINAL DE SEGURANÇA
+# 3. VERIFICAÇÃO FINAL DE SEGURANÇA (Se mesmo assim não achar o arquivo no GitHub)
 if df_base.empty:
-    st.warning("⚠️ Por favor, acesse primeiro a página 'Módulos de Engenharia' e carregue a planilha de ativos O&M para ativar o gerenciamento.")
+    st.warning("⚠️ Certifique-se de que o arquivo 'CMMS_Export_RB.csv' está na raiz do seu repositório GitHub para liberar o CMMS Nativo.")
 else:
+    # Cria uma cópia limpa para manipulação
+    df = df_base.copy()
+
     # Cria uma cópia limpa para manipulação
     df = df_base.copy()
 
