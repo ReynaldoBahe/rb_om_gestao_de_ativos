@@ -21,9 +21,7 @@ for chave in ['dados_os', 'df_filtrado', 'df', 'df_os']:
 if df_base.empty:
     try:
         # Lê o seu CSV padrão que está na raiz do GitHub
-        # Mude a linha 24 para ler exatamente o nome que o Google gerou:
-df_base = pd.read_csv("CMMS_Export_RB - CMMS_RB.csv")
-
+        df_base = pd.read_csv("CMMS_Export_RB - CMMS_RB.csv")
         st.session_state['dados_os'] = df_base
     except Exception:
         try:
