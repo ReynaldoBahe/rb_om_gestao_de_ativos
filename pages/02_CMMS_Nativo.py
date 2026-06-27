@@ -44,6 +44,11 @@ if 'dados_os' not in st.session_state or st.session_state['dados_os'].empty:
 
 df = st.session_state['dados_os']
 
+# Garantir que colunas críticas existam com strings limpas
+for col em ['Pecas_substituidas', 'Causa_Raiz']:
+    if col não em df.columns:
+        df[col] = ""
+
 # --------------------------------------------------------
 # CAIXA 1: FORMULÁRIO DE ABERTURA DE NOVA OS
 # --------------------------------------------------------
@@ -80,7 +85,6 @@ with st.form("formulario_nova_os", clear_on_submit=False):
             'Tempo_Parado_Horas': 0, 'Causa_Raiz': 'Pendente de Análise'
         }
         
-        # Grava e atualiza o DataFrame compartilhado na sessão global
         st.session_state['dados_os'] = pd.concat([st.session_state['dados_os'], pd.DataFrame([novo_registro])], ignore_index=True)
         st.success(f"✅ {nova_os} registrada com sucesso!")
         st.experimental_rerun()
@@ -95,10 +99,11 @@ lista_os = df['OS'].unique()
 os_selecionada = st.selectbox("Selecione uma OS para dar baixa ou alterar status:", lista_os)
 
 # Localiza o índice numérico real da linha correspondente no DataFrame mestre
-idx_real = df[df['OS'] == os_selecionada].index
+indices_encontrados = df[df['OS'] == os_selecionada].index
 
-if len(idx_real) > 0:
-    idx_real = idx_real[0]
+if len(indices_encontrados) > 0:
+    idx_real = indices_encontrados[0]  # 🔥 CORREÇÃO DA JOGADA: Coleta o número escalar puro do índice
+    
     status_atual = df.at[idx_real, 'Status']
     pecas_atuais = df.at[idx_real, 'Pecas_substituidas']
     
@@ -113,10 +118,10 @@ if len(idx_real) > 0:
         causa = st.selectbox("Causa Raiz", ["Desgaste Natural", "Falha Elétrica", "Erro Operacional", "Falha Mecânica"], index=0)
         
     if st.button("🔄 Atualizar Registro"):
-        # Gravação direta usando referências escalares à prova de erros de índice
+        # 🔥 CORREÇÃO DAS GRAVAÇÕES: Usando rigorosamente o idx_real numérico nas três linhas
         st.session_state['dados_os'].at[idx_real, 'Status'] = novo_status
-        st.session_state['dados_os'].at[idx_global, 'Pecas_substituidas'] = pecas
-        st.session_state['dados_os'].at[idx_global, 'Causa_Raiz'] = causa
+        st.session_state['dados_os'].at[idx_real, 'Pecas_substituidas'] = pecas
+        st.session_state['dados_os'].at[idx_real, 'Causa_Raiz'] = causa
         
         if novo_status == "Fechado":
             st.session_state['dados_os'].at[idx_real, 'Data_Fechamento'] = pd.Timestamp.now().strftime('%d/%m/%Y %H:%M:%S')
