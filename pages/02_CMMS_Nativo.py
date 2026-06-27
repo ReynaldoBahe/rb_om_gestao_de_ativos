@@ -18,19 +18,22 @@ for chave in ['dados_os', 'df_filtrado', 'df', 'df_os']:
             break
 
 # 2. SE CONTINUAR VAZIO: Lê direto o arquivo físico do seu repositório para nunca quebrar
-if df_base.empty:
     try:
-        # Lê o seu CSV padrão que está na raiz do GitHub
+        # Tenta a primeira opção (com hífen gerado pelo Google)
         df_base = pd.read_csv("CMMS_Export_RB - CMMS_RB.csv")
         st.session_state['dados_os'] = df_base
     except Exception:
         try:
-            df_base = pd.read_excel("CMMS_Export_RB.xlsx")
+            # Tenta a segunda opção (nome limpo padrão)
+            df_base = pd.read_csv("CMMS_Export_RB.csv")
             st.session_state['dados_os'] = df_base
         except Exception:
-            pass
+            try:
+                df_base = pd.read_excel("CMMS_Export_RB.xlsx")
+                st.session_state['dados_os'] = df_base
+            except Exception:
+                pass
 
-# 3. VERIFICAÇÃO FINAL DE SEGURANÇA
 if df_base.empty:
     st.warning("⚠️ Certifique-se de que o arquivo 'CMMS_Export_RB - CMMS_RB.csv' está na raiz do seu repositório GitHub para liberar o CMMS Nativo.")
 else:
