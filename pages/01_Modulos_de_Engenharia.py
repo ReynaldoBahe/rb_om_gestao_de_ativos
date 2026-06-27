@@ -171,8 +171,9 @@ with aba_produtividade:
         st.markdown("---")
         
         st.subheader("Controle de Ordens de Serviço por Técnico")
-        col_tecnico = next((c for c in df_filtrado.columns if c.lower() in ['técnico', 'tecnico', 'responsável', 'responsavel', 'técnico responsável']), df_filtrado.columns)
+        col_tecnico = next((c for c in df_filtrado.columns if c.lower() in ['ténico', 'tecnico', 'responsável', 'responsavel', 'técnico responsável']), df_filtrado.columns[0])
         
+        # 🛠️ CORREÇÃO 1: Renderizar o gráfico apenas se houver dados filtrados
         if not df_filtrado.empty:
             df_produtividade = df_filtrado.groupby(col_tecnico).size().reset_index(name='Ordens')
             df_produtividade.columns = ['Técnico', 'Ordens']
@@ -182,14 +183,22 @@ with aba_produtividade:
                 y=alt.Y('Ordens:Q', title='Total de Ordens de Serviço'),
                 tooltip=['Técnico', 'Ordens']
             ).properties(width='container', height=350)
-        st.altair_chart(grafico_altair, use_container_width=True)
-    else:
-        st.info("⚠️ Nenhuma ordem encontrada para o intervalo de tempo e filtros selecionados.")
+            
+            st.altair_chart(grafico_altair, use_container_width=True)
+        else:
+            st.info("⚠️ Nenhuma ordem encontrada para os filtros selecionados na barra lateral.")
+        
+        # 🛠️ CORREÇÃO 2: Tabela reposicionada para fora do 'else' mestre. Fica sempre visível!
         st.markdown("---")
-        st.markdown('📋 **Relatório Sincronizado de Ordens de Serviço**')
-        if 'df_filtrado' in locals() and not df_filtrado.empty:
+        st.subheader("📋 Relatório Sincronizado de Ordens de Serviço")
+        
+        if not df_filtrado.empty:
+            # Remove colunas auxiliares internas para limpar o visual da tabela
             colunas_exibir = [c for c in df_filtrado.columns if c not in ['Data_Abertura_dt', 'Dias_Aberta', 'Tempo_Num']]
-            st.dataframe(df_filtrado[colunas_exibir], use_container_width=True)
+            st.dataframe(df_filtrado[colunas_exibir], use_container_width=True, hide_index=True)
+            
+    else:
+        st.warning("⚠️ Por favor, carregue a planilha de ativos O&M na barra lateral para ativar o relatório.")
 
 
 # ==========================================
