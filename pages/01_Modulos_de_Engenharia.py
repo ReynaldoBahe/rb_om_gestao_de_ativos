@@ -19,7 +19,7 @@ EMPREENDIMENTOS = {
         "arquivo_cmms": "CMMS_Export_RB - CMMS_RB.csv"
     },
     "Hospital Central": {
-        "speckle_url": r"https://speckle.systems",
+        "speckle_url": r"https://app.speckle.systems/projects/a649da7292/models/815af390c7?embedToken=321a020df03b0bbba22db866f80f69124d5b4e26ea",
         "nome_exibicao": "Hospital Central - Centro Médico Operacional",
         "arquivo_cmms": "CMMS_Export_RB - CMMS_RB.csv"
     }
