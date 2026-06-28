@@ -13,20 +13,20 @@ cliente_logado = st.session_state.get("cliente_ativo", "Nenhum")
 
 EMPREENDIMENTOS = {
     "Resort Boa Viagem": {
-        "speckle_url": "https://app.speckle.systems/projects/a649da7292/models/815af390c7?embedToken=3dfe60e987b76afb17cb3957b8e74548d076442196",
+        "speckle_id": "https://speckle.systems...",
         "nome_exibicao": "Resort Boa Viagem - Complexo Hoteleiro",
         "arquivo_cmms": "CMMS_Export_RB - CMMS_RB.csv"
     },
     "Hospital Central": {
-        "speckle_url": "https://app.speckle.systems/projects/68bf6c4cd9/models/8246528aa7?embedToken=0d89925c39cda14a24e17c1dcf8fc0440534865ca7",
+        "speckle_id": "https://speckle.systems...",
         "nome_exibicao": "Hospital Central - Centro Médico Operacional",
-        "arquivo_cmms": "CMMS_Export_RB - CMMS_RB.csv" # Mude se tiver um CSV próprio depois
+        "arquivo_cmms": "CMMS_Export_RB - CMMS_RB.csv"
     }
 }
 
 if cliente_logado in EMPREENDIMENTOS:
     config = EMPREENDIMENTOS[cliente_logado]
-    SPECKLE_STREAM_ID = config["speckle_url1"]
+    SPECKLE_STREAM_ID = config["speckle_id"]
     NOME_PROJETO = config["nome_exibicao"]
     CAMINHO_CSV = config["arquivo_cmms"]
 else:
