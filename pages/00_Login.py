@@ -38,17 +38,33 @@ footer { visibility: hidden !important; }
 .right-wrapper { max-width: 420px; margin: 0 auto; padding-top: 30px; }
 .login-card { background-color: #06182B !important; padding: 35px 30px !important; border-radius: 16px !important; border: 1px solid #103154 !important; box-shadow: 0 12px 40px rgba(0,0,0,0.6) !important; }
 
-/* Configuração base uniforme dos campos */
 div[data-baseweb="input"], div[data-baseweb="input"] > div { background-color: #0C233C !important; border: 1px solid #1A446F !important; border-radius: 12px !important; height: 52px !important; }
 input { background-color: transparent !important; color: #FFFFFF !important; font-weight: 600 !important; font-size: 17px !important; }
 input::placeholder { color: #5F82A8 !important; font-size: 15px !important; }
 label { color: #8AB4F8 !important; font-weight: 700 !important; font-size: 15px !important; margin-bottom: 6px !important; display: block !important; }
 div[data-testid="stForm"] { border: none !important; padding: 0 !important; }
 
-/* 🛠️ A MÁGICA SEGURA: Mascara a segunda caixa de texto transformando tudo em bolinhas de senha e remove o adornment */
-div[data-testid="stForm"] div:nth-of-type(2) input {
-    -webkit-text-security: disc !important;
-    text-security: disc !important;
+/* 🛠️ CONTROLE INTEGRADO DO OLHO: Remove o bloco de cor de fundo sem tirar o ícone */
+div[data-testid="stTextInputAdornment"], div[data-testid="stTextInputAdornment"] > div {
+    background-color: transparent !important;
+    background: transparent !important;
+    border: none !important;
+    height: 100% !important;
+}
+div[data-testid="stTextInputAdornment"] button {
+    background-color: transparent !important;
+    background: transparent !important;
+    border: none !important;
+    box-shadow: none !important;
+    color: #8AB4F8 !important;
+    height: 100% !important;
+    width: 45px !important; /* Trava a largura para o botão não esticar */
+    margin: 0 !important;
+    padding: 0 !important;
+}
+div[data-testid="stTextInputAdornment"] button:hover {
+    color: #00D2FF !important;
+    background-color: transparent !important;
 }
 
 div[data-testid="stForm"] button, .stButton button { background-color: #104A7E !important; color: #FFFFFF !important; border-radius: 12px !important; border: 1px solid #1A62A3 !important; font-weight: 800 !important; font-size: 17px !important; height: 52px !important; width: 100% !important; margin-top: 15px !important; box-shadow: 0 4px 15px rgba(16,74,126,0.4) !important; }
@@ -58,7 +74,6 @@ div[data-testid="stNotification"] { background-color: #0C233C !important; border
 .resort-badge { background: #0A1E33; padding: 8px 16px; border-radius: 12px; font-weight: bold; font-size: 13px; border: 1px solid #143A63; color: #FFFFFF; }
 .verified-badge { background: rgba(0,210,255,0.08); color: #00D2FF; padding: 8px 16px; border-radius: 12px; font-size: 12px; border: 1px solid rgba(0,210,255,0.2); font-weight: 600; }
 .ssl-footer { color: #5F82A8; font-size: 12px; margin-top: 20px; display: flex; align-items: center; gap: 6px; justify-content: center; }
-</style>
 """
 
 st.markdown(f"<style>{css_code}</style>", unsafe_allow_html=True)
@@ -91,8 +106,8 @@ with col_direita:
     if st.session_state.login_step == 1:
         with st.form("form_etapa_1", clear_on_submit=False):
             email = st.text_input("E-mail", placeholder="seu.email@email.com")
-            # REMOVIDO type="password" PARA ELIMINAR O COMPONENTE DEFORMADO
-            senha = st.text_input("Senha", placeholder="••••••••")
+            # ATIVADO VOLTANDO COM O RETORNO DO OLHINHO NATIVO PROTEGIDO
+            senha = st.text_input("Senha", type="password", placeholder="••••••••")
             st.markdown("<br>", unsafe_allow_html=True)
             st.info("🔵 Verificação em 2 etapas: Um código será enviado ao seu e-mail.")
             if st.form_submit_button("Entrar", use_container_width=True):
@@ -115,16 +130,10 @@ with col_direita:
                 if st.form_submit_button("Confirmar", use_container_width=True):
                     user_info = lista_usuarios[st.session_state.usuario_validado]
                     if codigo == user_info["token"]:
-                        st.success("Acesso autorizado!")
+                        st.success("Acesso authorized!")
                         time.sleep(0.5)
                         st.session_state.logged_in = True
                         st.session_state.cliente_ativo = user_info["cliente"]
                         st.session_state.user_email = st.session_state.usuario_validado
                         st.session_state.login_step = 1
                         st.rerun()
-                    else:
-                        st.error("Código incorreto.")
-                        
-    st.markdown('</div>', unsafe_allow_html=True)
-    st.markdown('<div class="ssl-footer">🔒 Conexão segura SSL <span style="color:#537BAB; margin-left:20px;">© 2026 DT Facilities O&M</span></div>', unsafe_allow_html=True)
-    st.markdown('</div>', unsafe_allow_html=True)
