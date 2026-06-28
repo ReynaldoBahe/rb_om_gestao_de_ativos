@@ -62,13 +62,15 @@ with aba_login:
         conn.close()
 
         if usuario_valido:
-            st.success("Login realizado com sucesso! Entrando...")
-            
-            # ATUALIZAÇÃO CRÍTICA: Altera a variável exata que o seu app.py espera receber
+            # 1. Define as variáveis exatas que o seu app.py e seus módulos precisam
             st.session_state.logged_in = True
+            st.session_state["username"] = username
+            st.session_state["usuario_logado"] = username
             
-            # Recarrega para o app.py montar o menu com "Menu Principal" e "Módulos Operacionais"
-            st.rerun()
+            st.success("Acesso liberado! Clique no botão abaixo para entrar.")
+            
+            # 2. Usa um botão de navegação nativo e seguro para mudar de página sem bugar o app.py
+            st.page_link("pages/01_Home.py", label="Ir para a Página Inicial 🚀", icon="🏠")
         else:
             st.error("Usuário ou senha incorretos.")
 
