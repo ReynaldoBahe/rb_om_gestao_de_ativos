@@ -96,33 +96,30 @@ if not df.empty:
         concl_p = len(df_pcm[(df_pcm[c_tipo].astype(str).str.lower().str.contains('prev', na=False)) & (df_pcm[c_status].astype(str).str.lower().str.contains('fechado|concluido|encerrado', na=False))])
         taxa_prev = (concl_p / tot_p * 100) if tot_p > 0 else 100.0
 
-    # --- NOVO: CÁLCULO DE AGING / TEMPO DE BACKLOG ---
+    # --- CÁLCULO SEGURO E LINEAR DE AGING ---
     tempo_medio_backlog_dias = 0.0
     if c_abertura:
         df_pcm['Data_Abertura_Conv'] = pd.to_datetime(df_pcm[c_abertura], errors='coerce')
         
-        # Se tiver fechamento usa ele, senão compara com a data atual (2026)
         if c_fechamento:
             df_pcm['Data_Fechamento_Conv'] = pd.to_datetime(df_pcm[c_fechamento], errors='coerce')
             df_pcm['Data_Final_Calculo'] = df_pcm['Data_Fechamento_Conv'].fillna(pd.Timestamp(datetime.date.today()))
         else:
             df_pcm['Data_Final_Calculo'] = pd.Timestamp(datetime.date.today())
             
-        df_pcm['Dias_No_Backlog'] = (df_pcm['Data_Final_Calculo'] - df_pcm['Data_Abertura_Conv']).dt.total_seconds() / (3600.0 * 24.0)
-        df_pcm['Dias_No_Backlog'] = df_pcm['Dias_No_Backlog'].fillna(0.0).apply(lambda x: max(x, 0.0))
-        tempo_medio_backlog_dias = df_pcm['Dias_No_Backlog'].mean()
+        df_pcm['Dias_No_Backlog'] = (df_pcm['Data_Final_Calculo'] - df_pcm['Data_Abertura_Conv']).dt.total_seconds() / 86400.0
+        df_pcm['Dias_No_Backlog'] = df_pcm['Dias_No_Backlog'].fillna(0.0).clip(lower=0.0)
+        tempo_medio_backlog_dias = float(df_pcm['Dias_No_Backlog'].mean())
 
-        # Definição das faixas de envelhecimento da OS (Aging)
-        def categorizar_aging(dias):
-            if dias <= 7: return "01. 0 a 7 dias"
-            elif dias <= 15: return "02. 7 a 15 dias"
-            elif dias <= 30: return "03. 15 a 30 dias"
-            else: return "04. Mais de 30 dias (Crônico)"
-            
-        df_pcm['Faixa_Aging'] = df_pcm['Dias_No_Backlog'].apply(categorizar_aging)
+        # Categorização direta via condições lógicas estruturadas do Pandas (sem funções aninhadas)
+        df_pcm['Faixa_Aging'] = "01. 0 a 7 dias"
+        df_pcm.loc[df_pcm['Dias_No_Backlog'] > 7, 'Faixa_Aging'] = "02. 7 a 15 dias"
+        df_pcm.loc[df_pcm['Dias_No_Backlog'] > 15, 'Faixa_Aging'] = "03. 15 a 30 dias"
+        df_pcm.loc[df_pcm['Dias_No_Backlog'] > 30, 'Faixa_Aging'] = "04. Mais de 30 dias (Crônico)"
+        
         df_pcm['Mes_Ano'] = df_pcm['Data_Abertura_Conv'].dt.to_period('M').astype(str)
 
-    # Cartões de Métricas Expandidos
+    # Quatro Cartões de Métricas Alinhados no Topo
     m1, m2, m3, m4 = st.columns(4)
     with m1:
         st.metric(label="📋 Volume de Ordens", value=total_om)
@@ -131,14 +128,13 @@ if not df.empty:
     with m3:
         st.metric(label="🎯 Cumprimento Preventivas", value=f"{taxa_prev:.1f} %")
     with m4:
-        st.metric(label="⏱️ Tempo Médio de Residência", value=f"{tempo_medio_backlog_dias:.1f} dias", help="Tempo médio que as OS passam na fila do backlog antes de serem totalmente liquidadas.")
+        st.metric(label="⏱️ Tempo Médio Backlog", value=f"{tempo_medio_backlog_dias:.1f} dias")
 
     st.write("---")
     
     col_grafico, col_dados = st.columns([1.2, 1.0])
     
     with col_grafico:
-        # Incluída a nova aba de Análise de Envelhecimento (Aging)
         tab_setor, tab_tendencia, tab_aging = st.tabs(["📊 Carga por Setor", "📈 Linha de Tendência", "⏳ Tempo de Residência (Aging)"])
         
         with tab_setor:
@@ -179,22 +175,29 @@ if not df.empty:
             if not v_counts.empty:
                 sistema_gargalo = str(v_counts.idxmax())
 
-        # Relatório de IA contextualizado com o tempo de residência das OS
         if tempo_medio_backlog_dias > 15.0:
             st.error(f"""
             ### ❌ ALERTA DE ENVELHECIMENTO CRÔNICO
             As ordens estão retidas por muito tempo na fila de espera.
             
-            * **Diagnóstico:** O tempo médio de residência de **{tempo_medio_backlog_dias:.1f} dias** indica lentidão crítica no fluxo de liquidação do backlog.
-            * **Gargalo Identificado:** O setor de **{sistema_gargalo}** concentra o maior volume, gerando gargalo administrativo.
+            * **Diagnóstico:** O tempo de backlog médio de **{tempo_medio_backlog_dias:.1f} dias** indica lentidão no fluxo de liquidação.
+            * **Gargalo:** O setor de **{sistema_gargalo}** concentra o maior volume.
             
-            🚨 **Ação Coordenada:** Verifique a aba de **Tempo de Residência (Aging)**. Ordens na faixa 'Mais de 30 dias' indicam materiais em falta ou escassez de equipe técnica dedicada.
+            🚨 **Ação:** Verifique a aba de Aging. Ordens na faixa 'Mais de 30 dias' indicam materiais em falta ou escassez de equipe técnica dedicada.
             """)
         else:
             st.success(f"""
             ### ✅ FLUXO DE LIQUIDAÇÃO VELOZ
             Giro de Ordens de Serviço operando com alta velocidade operacional.
             
-            * **Diagnóstico:** Tempo médio de residência controlado em **{tempo_medio_backlog_dias:.1f} dias**. Os chamados estão sendo abertos e finalizados sem represamento crônico.
-            * **Cumprimento do Plano:** A taxa de preventivas e o monitoramento em **{sistema_gargalo}** evitam a paralisia do backlog técnico.
+            * **Diagnóstico:** Tempo médio de residência controlado em **{tempo_medio_backlog_dias:.1f} dias**. Os chamados estão sendo fechados sem represamento crônico.
+            * **Maturidade:** O monitoramento contínuo em **{sistema_gargalo}** evita a paralisia do backlog técnico.
             
+            👍 **Orientação:** Mantenha auditorias semanais na aba de **Aging** para blindar o sistema e impedir o represamento de ordens.
+            """)
+
+    st.write("---")
+    st.markdown("### Quadro de Ordens Filtrado por Escopo de PCM")
+    st.dataframe(df_pcm, use_container_width=True)
+else:
+    st.info("Nenhum dado cadastrado para exibição.")
