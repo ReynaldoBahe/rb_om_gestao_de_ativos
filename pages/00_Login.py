@@ -38,35 +38,29 @@ footer { visibility: hidden !important; }
 .right-wrapper { max-width: 420px; margin: 0 auto; padding-top: 30px; }
 .login-card { background-color: #06182B !important; padding: 35px 30px !important; border-radius: 16px !important; border: 1px solid #103154 !important; box-shadow: 0 12px 40px rgba(0,0,0,0.6) !important; }
 
-/* Configuração dos campos de entrada */
 div[data-baseweb="input"], div[data-baseweb="input"] > div { background-color: #0C233C !important; border: 1px solid #1A446F !important; border-radius: 12px !important; height: 52px !important; }
-input { background-color: transparent !important; color: #FFFFFF !important; font-weight: 600 !important; font-size: 17px !important; }
+input { background-color: transparent !important; color: #FFFFFF !important; font-weight: 600 !important; font-size: 17px !important; width: 100% !important; }
 input::placeholder { color: #5F82A8 !important; font-size: 15px !important; }
 label { color: #8AB4F8 !important; font-weight: 700 !important; font-size: 15px !important; margin-bottom: 6px !important; display: block !important; }
 div[data-testid="stForm"] { border: none !important; padding: 0 !important; }
 
-/* 🛠️ APAGÃO DA TARJA: Esconde o bloco esticado azul e deixa apenas o ícone do olho visível */
+/* 🛠️ REMOÇÃO TOTAL DA AREA DO OLHO E DA TARJA INTERNA */
 div[data-testid="stTextInputAdornment"], 
-div[data-testid="stTextInputAdornment"] > div { 
-    visibility: hidden !important;
-    background-color: transparent !important;
-    background: transparent !important;
-    border: none !important;
+div[data-testid="stTextInputAdornment"] *,
+div[data-baseweb="input"] button { 
+    display: none !important; 
+    width: 0px !important; 
+    height: 0px !important; 
+    visibility: hidden !important; 
 }
 
-/* Força apenas o botão do olho a reaparecer flutuando de forma transparente */
-div[data-testid="stTextInputAdornment"] button { 
-    visibility: visible !important;
-    background-color: transparent !important; 
-    background: transparent !important; 
-    border: none !important; 
-    box-shadow: none !important; 
-    color: #8AB4F8 !important; 
+/* Garante o preenchimento total e alinhamento do texto da senha */
+div[data-baseweb="input"] > div:first-child { 
+    width: 100% !important; 
+    padding-right: 14px !important; 
 }
-div[data-testid="stTextInputAdornment"] button:hover { color: #00D2FF !important; }
 
-/* Botões do formulário */
-div[data-testid="stForm"] button, .stButton button { background-color: #104A7E !important; color: #FFFFFF !important; border-radius: 12px !important; border: 1px solid #1A62A3 !important; font-weight: 800 !important; font-size: 17px !important; height: 52px !important; width: 100% !important; margin-top: 15px !important; box-shadow: 0 4px 15px rgba(16,74,126,0.4) !important; }
+div[data-testid="stForm"] button, .stButton button, button { background-color: #104A7E !important; color: #FFFFFF !important; border-radius: 12px !important; border: 1px solid #1A62A3 !important; font-weight: 800 !important; font-size: 17px !important; height: 52px !important; width: 100% !important; margin-top: 15px !important; box-shadow: 0 4px 15px rgba(16,74,126,0.4) !important; }
 div[data-testid="stForm"] button:hover { background-color: #165CA1 !important; }
 div[data-testid="stNotification"] { background-color: #0C233C !important; border: 1px solid #1A446F !important; color: #FFFFFF !important; border-radius: 12px !important; }
 .top-header { display: flex; justify-content: space-between; align-items: center; margin-bottom: 20px; }
@@ -133,3 +127,8 @@ with col_direita:
                     user_info = lista_usuarios[st.session_state.usuario_validado]
                     if codigo == user_info["token"]:
                         st.success("Acesso authorized!")
+                        time.sleep(0.5)
+                        st.session_state.logged_in = True
+                        st.session_state.cliente_ativo = user_info["cliente"]
+                        st.session_state.user_email = st.session_state.usuario_validado
+                        st.session_state.login_step = 1
