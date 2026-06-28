@@ -11,25 +11,24 @@ if "usuario_validado" not in st.session_state:
 try:
     lista_usuarios = st.secrets["users"]
 except KeyError:
-    # Caso rode localmente sem o arquivo configurado
     lista_usuarios = {
         "gerente.om@resortboaviagem.com": {"password": "SenhaResort123", "token": "852369", "cliente": "Resort Boa Viagem"}
     }
 
-# --- INJEÇÃO DE CSS REFORMULADO (PREMIUM FLAT GRADIENT) ---
+# --- INJEÇÃO DE CSS (ESTILO INTEGRADO DARK CORPORATIVO) ---
 st.markdown("""
     <style>
-        /* 1. Fundo em degradê moderno que traz iluminação para o centro da tela */
+        /* Fundo escuro uniforme e elegante */
         .stApp { 
-            background: linear-gradient(135deg, #07162c 0%, #1b355a 50%, #07162c 100%) !important; 
+            background-color: #03111E !important; 
             color: #FFFFFF; 
         }
         
         .left-panel { padding: 40px 20px; text-align: center; }
         
-        /* 2. Emblema da marca com brilho neon suave */
+        /* Badge redondo com brilho neon azul */
         .dt-badge { 
-            background: linear-gradient(135deg, #11375c 0%, #1e5286 100%); 
+            background-color: #0A1E33; 
             border-radius: 50%; 
             width: 100px; 
             height: 100px; 
@@ -37,65 +36,80 @@ st.markdown("""
             margin: 0 auto 20px auto; 
             font-weight: bold; 
             color: #00D2FF; 
-            box-shadow: 0 0 25px rgba(0, 210, 255, 0.4); 
-            border: 1px solid rgba(0, 210, 255, 0.3);
+            box-shadow: 0 0 20px rgba(0,210,255,0.25); 
+            border: 1px solid #10385F;
         }
         
-        .dt-title { font-size: 14px; letter-spacing: 2px; color: #9EBBDE; margin-bottom: 5px; font-weight: 600; }
-        .main-brand { font-size: 46px; font-weight: 900; color: #FFFFFF; margin-bottom: 15px; line-height: 1; text-shadow: 0 2px 10px rgba(0,0,0,0.3); }
-        .sub-brand { font-size: 13px; letter-spacing: 3px; color: #00D2FF; font-weight: bold; margin-bottom: 25px; }
-        .slogan { font-style: italic; color: #D1E2F4; font-size: 15px; margin-bottom: 30px; }
+        .dt-title { font-size: 14px; letter-spacing: 2px; color: #8AB4F8; margin-bottom: 5px; }
+        .main-brand { font-size: 42px; font-weight: 900; color: #FFFFFF; margin-bottom: 20px; line-height: 1; }
+        .sub-brand { font-size: 13px; letter-spacing: 3px; color: #8AB4F8; font-weight: bold; margin-bottom: 25px; }
+        .slogan { font-style: italic; color: #9EBBDE; font-size: 15px; margin-bottom: 30px; }
         
-        /* 3. Card de Login translúcido (Glassmorphism) que clareia a área de foco */
+        /* Card de login em bloco azul marinho fechado */
         .login-card { 
-            background-color: rgba(255, 255, 255, 0.04); 
+            background-color: #06182B; 
             padding: 35px; 
             border-radius: 16px; 
-            border: 1px solid rgba(255, 255, 255, 0.08); 
-            backdrop-filter: blur(12px);
-            box-shadow: 0 15px 35px rgba(0,0,0,0.4); 
+            border: 1px solid #103154; 
+            box-shadow: 0 12px 40px rgba(0,0,0,0.6); 
         }
         
         .login-title { font-size: 28px; font-weight: bold; color: #FFFFFF; text-align: center; margin-bottom: 5px; }
-        .login-subtitle { font-size: 14px; color: #BACCDA; text-align: center; margin-bottom: 30px; }
+        .login-subtitle { font-size: 14px; color: #8AB4F8; text-align: center; margin-bottom: 30px; }
         
-        /* 4. Caixas de entrada brancas (padrão de mercado) para contraste impecável e fim da tela escura */
+        /* Inputs azuis perfeitamente integrados com cantos arredondados */
         div[data-baseweb="input"] { 
-            background-color: #FFFFFF !important; 
-            border: 1px solid #CBD5E1 !important; 
-            border-radius: 8px !important; 
-            box-shadow: inset 0 1px 3px rgba(0,0,0,0.05) !important;
+            background-color: #0C233C !important; 
+            border: 1px solid #1A446F !important; 
+            border-radius: 12px !important; 
+            padding: 4px 8px !important;
         }
         
-        /* Cor do texto digitado interna mudou para azul escuro corporativo */
-        input { color: #0F172A !important; font-weight: 500 !important; }
-        input::placeholder { color: #94A3B8 !important; }
+        /* Cor do texto interno e do placeholder no dark mode */
+        input { color: #FFFFFF !important; font-weight: 500 !important; }
+        input::placeholder { color: #5F82A8 !important; }
         
-        label { color: #E2E8F0 !important; font-weight: 600 !important; font-size: 14px !important; margin-bottom: 4px; }
+        label { color: #8AB4F8 !important; font-weight: 600 !important; font-size: 14px !important; }
         
+        /* Botão estilizado em azul de destaque */
+        button[data-testid="baseButton-secondary"] {
+            background-color: #104A7E !important;
+            color: white !important;
+            border-radius: 12px !important;
+            border: 1px solid #1A62A3 !important;
+            font-weight: bold !important;
+            padding: 10px 0 !important;
+            box-shadow: 0 4px 12px rgba(16,74,126,0.3) !important;
+        }
+        button[data-testid="baseButton-secondary"]:hover {
+            background-color: #165B99 !important;
+            border-color: #2076C2 !important;
+        }
+        
+        /* Cabeçalho superior moderno */
         .top-header { display: flex; justify-content: space-between; align-items: center; margin-bottom: 25px; }
         
         .resort-badge { 
-            background: rgba(255, 255, 255, 0.06); 
-            padding: 6px 14px; 
-            border-radius: 20px; 
+            background: #0A1E33; 
+            padding: 8px 16px; 
+            border-radius: 12px; 
             font-weight: bold; 
             font-size: 13px; 
-            border: 1px solid rgba(255, 255, 255, 0.1); 
-            backdrop-filter: blur(5px);
+            border: 1px solid #143A63; 
+            color: #FFFFFF;
         }
         
         .verified-badge { 
-            background: rgba(0,210,255,0.12); 
+            background: rgba(0,210,255,0.08); 
             color: #00D2FF; 
-            padding: 6px 14px; 
-            border-radius: 20px; 
+            padding: 8px 16px; 
+            border-radius: 12px; 
             font-size: 12px; 
-            border: 1px solid rgba(0,210,255,0.25); 
+            border: 1px solid rgba(0,210,255,0.2); 
             font-weight: 600;
         }
         
-        .ssl-footer { color: #9EBBDE; font-size: 12px; margin-top: 20px; display: flex; align-items: center; gap: 6px; justify-content: center; opacity: 0.8; }
+        .ssl-footer { color: #5F82A8; font-size: 12px; margin-top: 20px; display: flex; align-items: center; gap: 6px; justify-content: center; }
     </style>
 """, unsafe_allow_html=True)
 
@@ -109,12 +123,11 @@ with col_esquerda:
     st.markdown('<div class="main-brand">O&M</div>', unsafe_allow_html=True)
     st.markdown('<div class="sub-brand">GESTÃO INTELIGENTE DE ATIVOS</div>', unsafe_allow_html=True)
     st.markdown('<div class="slogan">"Seu patrimônio sob controle, onde você estiver."</div>', unsafe_allow_html=True)
-    st.markdown('<p style="font-size:12px; color:#9EBBDE; word-spacing: 10px; font-weight:500;">Hospital • Resort • Supermercado • Facilities</p>', unsafe_allow_html=True)
+    st.markdown('<p style="font-size:12px; color:#5F82A8; word-spacing: 10px; font-weight:500;">Hospital • Resort • Supermercado • Facilities</p>', unsafe_allow_html=True)
     st.markdown('<div class="ssl-footer" style="justify-content:flex-start; margin-top:60px;">🔒 Conexão segura SSL</div>', unsafe_allow_html=True)
     st.markdown('</div>', unsafe_allow_html=True)
 
 with col_direita:
-    # Identifica dinamicamente o contexto visual se o usuário já inseriu o e-mail na Etapa 1
     nome_cliente = "Acesso Uniforme"
     if st.session_state.login_step == 2 and st.session_state.usuario_validado in lista_usuarios:
         nome_cliente = lista_usuarios[st.session_state.usuario_validado]["cliente"]
@@ -163,7 +176,7 @@ with col_direita:
                 if st.form_submit_button("Confirmar", use_container_width=True):
                     user_info = lista_usuarios[st.session_state.usuario_validado]
                     if codigo == user_info["token"]:
-                        st.success("Acesso authorized!")
+                        st.success("Acesso autorizado!")
                         time.sleep(0.5)
                         
                         st.session_state.logged_in = True
@@ -176,4 +189,4 @@ with col_direita:
                         st.error("Código incorreto.")
                         
     st.markdown('</div>', unsafe_allow_html=True)
-    st.markdown('<div class="ssl-footer">🔒 Conexão segura SSL <span style="color:#BACCDA; margin-left:20px;">© 2026 DT Facilities O&M</span></div>', unsafe_allow_html=True)
+    st.markdown('<div class="ssl-footer">🔒 Conexão segura SSL <span style="color:#537BAB; margin-left:20px;">© 2026 DT Facilities O&M</span></div>', unsafe_allow_html=True)
