@@ -45,21 +45,18 @@ input::placeholder { color: #5F82A8 !important; font-size: 15px !important; }
 label { color: #8AB4F8 !important; font-weight: 700 !important; font-size: 15px !important; margin-bottom: 6px !important; display: block !important; }
 div[data-testid="stForm"] { border: none !important; padding: 0 !important; }
 
-/* 🛠️ CORREÇÃO DEFINITIVA DO OLHINHO: Remove qualquer fundo do botão interno */
-div[data-testid="stTextInputAdornment"], div[data-testid="stTextInputAdornment"] button, div[data-baseweb="input"] button { 
-    background-color: transparent !important; 
-    background: transparent !important;
-    border: none !important; 
-    box-shadow: none !important; 
-    height: 100% !important; 
-    margin-top: 0px !important; 
-    color: #8AB4F8 !important; 
-    padding-right: 10px !important;
-    width: auto !important;
+/* 🛠️ REMOÇÃO TOTAL DO ADORNMENT AZUL ESTICADO NATIVO DO STREAMLIT */
+div[data-testid="stTextInputAdornment"], div[data-testid="stTextInputAdornment"] * { 
+    display: none !important; 
+    width: 0px !important; 
+    height: 0px !important; 
+    visibility: hidden !important; 
 }
-div[data-testid="stTextInputAdornment"] button:hover { color: #00D2FF !important; background-color: transparent !important; }
 
-/* Aplica o azul apenas nos botões de formulário reais (Sem tocar no olhinho) */
+/* Garante que o input use o espaço inteiro que sobrou da remoção */
+div[data-baseweb="input"] > div:first-child { width: 100% !important; padding-right: 15px !important; }
+
+/* Aplica o azul apenas nos botões de formulário reais */
 div[data-testid="stForm"] button, .stButton button { background-color: #104A7E !important; color: #FFFFFF !important; border-radius: 12px !important; border: 1px solid #1A62A3 !important; font-weight: 800 !important; font-size: 17px !important; height: 52px !important; width: 100% !important; margin-top: 15px !important; box-shadow: 0 4px 15px rgba(16,74,126,0.4) !important; }
 div[data-testid="stForm"] button:hover { background-color: #165CA1 !important; }
 
@@ -123,7 +120,7 @@ with col_direita:
                 if st.form_submit_button("Confirmar", use_container_width=True):
                     user_info = lista_usuarios[st.session_state.usuario_validado]
                     if codigo == user_info["token"]:
-                        st.success("Acesso autorizado!")
+                        st.success("Acesso authorized!")
                         time.sleep(0.5)
                         st.session_state.logged_in = True
                         st.session_state.cliente_ativo = user_info["cliente"]
@@ -134,3 +131,4 @@ with col_direita:
                         st.error("Código incorreto.")
                         
     st.markdown('</div>', unsafe_allow_html=True)
+    st.markdown('<div class="ssl-footer">🔒 Conexão segura SSL <span style="color:#537BAB; margin-left:20px;">© 2026 DT Facilities O&M</span></div>', unsafe_allow_html=True)
