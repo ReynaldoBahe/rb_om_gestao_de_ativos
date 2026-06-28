@@ -14,20 +14,20 @@ cliente_logado = st.session_state.get("cliente_ativo", "Nenhum")
 # Dicionário com os links completos de incorporação em formato bruto seguro (Raw)
 EMPREENDIMENTOS = {
     "Resort Boa Viagem": {
-        "speckle_url": r"https://app.speckle.systems/projects/68bf6c4cd9/models/8246528aa7?embedToken=d8bb03135c8a1b0bde90b7d8ca6c44274647140862",
+        "speckle_url": r"https://speckle.systems",
         "nome_exibicao": "Resort Boa Viagem - Complexo Hoteleiro",
         "arquivo_cmms": "CMMS_Export_RB - CMMS_RB.csv"
     },
     "Hospital Central": {
-        "speckle_url": r"https://app.speckle.systems/projects/a649da7292/models/815af390c7?embedToken=321a020df03b0bbba22db866f80f69124d5b4e26ea",
+        "speckle_url": r"https://speckle.systems",
         "nome_exibicao": "Hospital Central - Centro Médico Operacional",
-        "arquivo_cmms": "CMMS_Export_RB - CMMS_RB.csv"
+        "arquivo_cmms": "CMMS_Export_Hospital.csv - CMMS_RB.csv"
     }
 }
 
 if cliente_logado in EMPREENDIMENTOS:
     config = EMPREENDIMENTOS[cliente_logado]
-    SPECKLE_STREAM_ID = config["speckle_url"]
+   SPECKLE_STREAM_ID = config["speckle_url"]
     NOME_PROJETO = config["nome_exibicao"]
     CAMINHO_CSV = config["arquivo_cmms"]
 else:
