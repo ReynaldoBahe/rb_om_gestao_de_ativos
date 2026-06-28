@@ -45,12 +45,20 @@ input::placeholder { color: #5F82A8 !important; font-size: 15px !important; }
 label { color: #8AB4F8 !important; font-weight: 700 !important; font-size: 15px !important; margin-bottom: 6px !important; display: block !important; }
 div[data-testid="stForm"] { border: none !important; padding: 0 !important; }
 
-/* 🛠️ APAGÃO DA TARJA: Obriga o contêiner interno do olho a herdar a cor escura exata do campo (#0C233C) */
+/* 🛠️ APAGÃO DA TARJA: Esconde o bloco esticado azul e deixa apenas o ícone do olho visível */
 div[data-testid="stTextInputAdornment"], 
-div[data-testid="stTextInputAdornment"] > div, 
+div[data-testid="stTextInputAdornment"] > div { 
+    visibility: hidden !important;
+    background-color: transparent !important;
+    background: transparent !important;
+    border: none !important;
+}
+
+/* Força apenas o botão do olho a reaparecer flutuando de forma transparente */
 div[data-testid="stTextInputAdornment"] button { 
-    background-color: #0C233C !important; 
-    background: #0C233C !important; 
+    visibility: visible !important;
+    background-color: transparent !important; 
+    background: transparent !important; 
     border: none !important; 
     box-shadow: none !important; 
     color: #8AB4F8 !important; 
@@ -125,7 +133,3 @@ with col_direita:
                     user_info = lista_usuarios[st.session_state.usuario_validado]
                     if codigo == user_info["token"]:
                         st.success("Acesso authorized!")
-                        time.sleep(0.5)
-                        st.session_state.logged_in = True
-                        st.session_state.cliente_ativo = user_info["cliente"]
-                        st.session_state.user_email = st.session_state.usuario_validado
