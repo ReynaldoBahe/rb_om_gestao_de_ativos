@@ -77,26 +77,21 @@ else:
     except Exception:
         df = pd.DataFrame()
 
-# Prepara as variáveis base de contagem
+# Prepara as variáveis base de contagem macro
 total_os = len(df)
 os_criticas = 0
 os_abertas = 0
 
 if not df.empty:
-    # Padronização limpa das colunas substituindo sublinhados por espaços
     df.columns = [str(c).strip().replace('_', ' ').title() for c in df.columns]
-    
-    # Encontra os nomes exatos das colunas chaves de forma segura
     col_status_list = [c for c in df.columns if 'status' in c.lower()]
     col_criticidade_list = [c for c in df.columns if 'criticidade' in c.lower()]
     
     if col_criticidade_list:
         os_criticas = len(df[df[col_criticidade_list[0]].astype(str).str.lower().str.contains('alta', na=False)])
-        
     if col_status_list:
         os_abertas = len(df[df[col_status_list[0]].astype(str).str.lower().str.contains('aberta|em andamento|andamento', na=False)])
 
-    # Aplicação dos filtros interativos padrão da sidebar
     if col_status_list and filtro_status != "Todos":
         df = df[df[col_status_list[0]].astype(str).str.lower() == filtro_status.lower()]
     if col_criticidade_list and filtro_criticidade != "Todos":
@@ -114,7 +109,6 @@ st.components.v1.html(f'<iframe src="{speckle_base_url}" width="100%" height="60
 # 6. CENTRO DE DIAGNÓSTICO E ANALYTICS (IA MULTI-CLIENTE & FINANCEIRO)
 # =========================================================================
 if not df.empty:
-    # Garante a busca exata pela coluna 'Os' para o seletor na sidebar
     col_id_os = [c for c in df.columns if c.lower() == 'os']
     if not col_id_os:
         col_id_os = [c for c in df.columns if 'os' in c.lower() or 'numero' in c.lower()]
@@ -128,7 +122,6 @@ if not df.empty:
     
     os_selecionada = st.sidebar.selectbox("Selecione uma OS específica para auditoria:", opcoes_os)
     
-    # Aplica o filtro de OS selecionada antes de calcular as métricas da IA
     df_analise = df.copy()
     analise_individual = False
     
@@ -136,7 +129,6 @@ if not df.empty:
         df_analise = df[df[col_id_os[0]].astype(str) == os_selecionada]
         analise_individual = True
 
-    # --- RECALCULA MÉTRICAS DINÂMICAS BASEADAS NA VISÃO DA IA ---
     total_os = len(df_analise)
     os_criticas = 0
     os_abertas = 0
@@ -147,11 +139,9 @@ if not df.empty:
     
     if col_criticidade:
         os_criticas = len(df_analise[df_analise[col_criticidade[0]].astype(str).str.lower().str.contains('alta', na=False)])
-        
     if col_status:
         os_abertas = len(df_analise[df_analise[col_status[0]].astype(str).str.lower().str.contains('aberta|em andamento|andamento', na=False)])
 
-    # Adiciona coluna de custos somados e limpos no dataframe de análise
     col_custo_mat = [c for c in df_analise.columns if 'material' in c.lower()]
     col_custo_mo = [c for c in df_analise.columns if 'obra' in c.lower() or 'mao' in c.lower()]
     df_analise['Custo_Total_Calculado'] = 0.0
@@ -166,11 +156,9 @@ if not df.empty:
     if col_custo_mo:
         df_analise['Custo_Total_Calculado'] += limpar_coluna_moeda(df_analise[col_custo_mo[0]])
 
-# 6.2. INTERFACE PRINCIPAL DO CENTRO DE DIAGNÓSTICO
 st.markdown('<div class="card-home"><div class="card-home-title">📊 Centro de Diagnóstico Avançado (IA & Custos)</div></div>', unsafe_allow_html=True)
 
 if not df.empty:
-    # Renderização dos cartões numéricos desafogados e limpos
     m1, m2, m3 = st.columns(3)
     with m1:
         st.metric(label="Total de Ordens de Serviço", value=total_os)
@@ -188,11 +176,9 @@ if not df.empty:
             st.metric(label="🛠️ OS Pendentes (Ação Imediata)", value=os_abertas)
         
     st.write("<br>", unsafe_allow_html=True)
-    
     col_grafico, col_dados = st.columns([1.2, 1.0])
     
     with col_grafico:
-        # Cria abas para acomodar a Visão de Manutenção e a Visão Financeira lado a lado
         tab_operacional, tab_financeira = st.tabs(["📊 Visão Operacional", "💰 Visão Financeira"])
         
         with tab_operacional:
@@ -209,3 +195,12 @@ if not df.empty:
                 
         with tab_financeira:
             if col_descricao_ativo:
+                st.markdown("**Top Ativos que mais Consomem Orçamento**")
+                df_custo_ativo = df_analise.groupby(col_descricao_ativo[0])['Custo_Total_Calculado'].sum().reset_index()
+                df_custo_ativo = df_custo_ativo.sort_values(by='Custo_Total_Calculado', ascending=False).head(5)
+                
+                chart_custo = alt.Chart(df_custo_ativo).mark_bar(color='#1E3A8A').encode(
+                    x=alt.X('Custo_Total_Calculado:Q', title='Investimento Acumulado (R$)'),
+                    y=alt.Y(f'{col_descricao_ativo[0]}:N', title='Ativo/Equipamento', sort='-x')
+                ).properties(height=250)
+                st.altair_chart(chart_custo, use_container_width=True)
