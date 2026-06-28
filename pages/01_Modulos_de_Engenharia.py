@@ -91,23 +91,23 @@ if not df.empty:
     col_criticidade = [c for c in df.columns if 'criticidade' in c.lower()]
     
     if col_criticidade:
-        os_criticas = len(df[df[col_criticidade[0]].astype(str).str.lower().str.contains('alta', na=False)])
+        os_criticas = len(df[df[col_criticidade].astype(str).str.lower().str.contains('alta', na=False)])
         
     if col_status:
-        os_abertas = len(df[df[col_status[0]].astype(str).str.lower().str.contains('aberta|em andamento|andamento', na=False)])
+        os_abertas = len(df[df[col_status].astype(str).str.lower().str.contains('aberta|em andamento|andamento', na=False)])
 
     # Aplicação dos filtros interativos
     if col_status and filtro_status != "Todos":
-        df = df[df[col_status[0]].astype(str).str.lower() == filtro_status.lower()]
+        df = df[df[col_status].astype(str).str.lower() == filtro_status.lower()]
     if col_criticidade and filtro_criticidade != "Todos":
-        df = df[df[col_criticidade[0]].astype(str).str.lower() == filtro_criticidade.lower()]
+        df = df[df[col_criticidade].astype(str).str.lower() == filtro_criticidade.lower()]
 
 # =========================================================================
 # 5. VISUALIZADOR 3D INTEGRADO (SPECKLE EMBED)
 # =========================================================================
 st.markdown('<div class="card-home"><div class="card-home-title">Visualizador Operacional de Ativos 3D</div></div>', unsafe_allow_html=True)
 
-speckle_base_url = SPEKL_STREAM_ID = SPECKLE_STREAM_ID
+speckle_base_url = SPECKLE_STREAM_ID
 st.components.v1.html(f'<iframe src="{speckle_base_url}" width="100%" height="600" frameborder="0"></iframe>', height=602)
 
 # =========================================================================
@@ -135,9 +135,9 @@ if not df.empty:
         
         if col_s and col_c:
             chart = alt.Chart(df).mark_bar().encode(
-                x=alt.X(f'{col_s[0]}:N', title='Status da OS'),
+                x=alt.X(f'{col_s}:N', title='Status da OS'),
                 y=alt.Y('count():Q', title='Quantidade de Ativos'),
-                color=alt.Color(f'{col_c[0]}:N', scale=alt.Scale(domain=['Alta', 'Média', 'Baixa'], range=['#DC2626', '#F59E0B', '#10B981']))
+                color=alt.Color(f'{col_c}:N', scale=alt.Scale(domain=['Alta', 'Média', 'Baixa'], range=['#DC2626', '#F59E0B', '#10B981']))
             ).properties(height=300)
             st.altair_chart(chart, use_container_width=True)
         else:
@@ -154,8 +154,8 @@ if not df.empty:
 
         # 1. Identificação do Setor (Climatização/Elétrica/Mecânica)
         col_setor = [c for c in df.columns if 'setor' in c.lower() or 'sistema' in c.lower()]
-        if col_setor and not df[col_setor[0]].empty:
-            v_counts = df[col_setor[0]].value_counts()
+        if col_setor and not df[col_setor].empty:
+            v_counts = df[col_setor].value_counts()
             if not v_counts.empty:
                 sistema_gargalo = str(v_counts.idxmax())
                 falhas_sistema = int(v_counts.max())
@@ -170,15 +170,15 @@ if not df.empty:
             return pd.to_numeric(s_str, errors='coerce').sum()
             
         if col_custo_mat:
-            custo_total += limpar_moeda_safe(df[col_custo_mat[0]])
+            custo_total += limpar_moeda_safe(df[col_custo_mat])
         if col_custo_mo:
-            custo_total += limpar_moeda_safe(df[col_custo_mo[0]])
+            custo_total += limpar_moeda_safe(df[col_custo_mo])
 
         # 3. Mapeamento da Eficiência de O&M
         col_tipo = [c for c in df.columns if 'tipo' in c.lower()]
         if col_tipo:
-            corretivas = len(df[df[col_tipo[0]].astype(str).str.lower().str.contains('corretiva|corretivo', na=False)])
-            preventivas = len(df[df[col_tipo[0]].astype(str).str.lower().str.contains('preventiva|preventivo', na=False)])
+            corretivas = len(df[df[col_tipo].astype(str).str.lower().str.contains('corretiva|corretivo', na=False)])
+            preventivas = len(df[df[col_tipo].astype(str).str.lower().str.contains('preventiva|preventivo', na=False)])
 
         taxa_critica = (os_criticas / total_os * 100) if total_os > 0 else 0
         texto_gargalo = f"🔍 **Gargalo Físico:** O setor com mais chamados é **{sistema_gargalo}**, concentrando {falhas_sistema} registros." if falhas_sistema > 0 else "🔍 **Gargalo Físico:** Distribuição equilibrada entre setores."
@@ -202,3 +202,5 @@ if not df.empty:
             O ecossistema técnico de **{NOME_PROJETO}** opera em conformidade.
             
             {texto_gargalo}  
+            {texto_custos}
+            
