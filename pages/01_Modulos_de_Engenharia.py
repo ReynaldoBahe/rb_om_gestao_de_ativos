@@ -11,7 +11,6 @@ if "logged_in" not in st.session_state or not st.session_state.logged_in:
 
 cliente_logado = st.session_state.get("cliente_ativo", "Nenhum")
 
-# Dicionário com os links completos de incorporação em formato bruto seguro (Raw)
 EMPREENDIMENTOS = {
     "Resort Boa Viagem": {
         "speckle_url": r"https://speckle.systems",
@@ -27,7 +26,7 @@ EMPREENDIMENTOS = {
 
 if cliente_logado in EMPREENDIMENTOS:
     config = EMPREENDIMENTOS[cliente_logado]
-   SPECKLE_STREAM_ID = config["speckle_url"]
+    SPECKLE_STREAM_ID = config["speckle_url"]
     NOME_PROJETO = config["nome_exibicao"]
     CAMINHO_CSV = config["arquivo_cmms"]
 else:
@@ -46,7 +45,6 @@ st.markdown("""
     </style>
 """, unsafe_allow_html=True)
 
-# Cabeçalho dinâmico do cliente logado
 st.markdown(f'<div class="main-title">🏗️ Módulos de Engenharia — {NOME_PROJETO}</div>', unsafe_allow_html=True)
 st.markdown(f'<div class="sub-title">Sessão operacional segura: {st.session_state.get("user_email")}</div>', unsafe_allow_html=True)
 
@@ -57,7 +55,6 @@ st.sidebar.header("Painel de controle")
 
 filtro_status = st.sidebar.selectbox("Filtrar por Status:", ["Todos", "Aberta", "Em Andamento", "Pausada", "Fechado"])
 filtro_criticidade = st.sidebar.selectbox("Filtrar por Criticidade:", ["Todos", "Alta", "Média", "Baixa"])
-filtro_tempo = st.sidebar.selectbox("Filtrar por Tempo Aberta:", ["Todos", "Menos de 24h", "Entre 2 e 7 dias", "Mais de 7 dias"])
 
 st.sidebar.write("---")
 arquivo_upload = st.sidebar.file_uploader("📂 Importar dados/OM", type=["csv", "xlsx"])
@@ -78,9 +75,8 @@ else:
     try:
         df = pd.read_csv(CAMINHO_CSV)
     except Exception:
-        df = pd.DataFrame(columns=["Status", "Criticidade", "Tempo", "ID", "Ativo", "Componente", "Descricao"])
+        df = pd.DataFrame(columns=["Status", "Criticidade"])
 
-# Aplicação dos Filtros se a tabela possuir os dados
 if not df.empty and 'Status' in df.columns:
     if filtro_status != "Todos":
         df = df[df['Status'] == filtro_status]
@@ -92,12 +88,11 @@ if not df.empty and 'Status' in df.columns:
 # =========================================================================
 st.markdown('<div class="card-home"><div class="card-home-title">Visualizador Operacional de Ativos 3D</div></div>', unsafe_allow_html=True)
 
-# Renderiza o Iframe passando diretamente o link oficial completo armazenado na variável
 speckle_base_url = SPECKLE_STREAM_ID
 st.components.v1.html(f'<iframe src="{speckle_base_url}" width="100%" height="600" frameborder="0"></iframe>', height=602)
 
 # =========================================================================
-# 6. CENTRO DE DIAGNÓSTICO E ANALYTICS (EXEMPLO)
+# 6. CENTRO DE DIAGNÓSTICO E ANALYTICS
 # =========================================================================
 st.markdown('<div class="card-home"><div class="card-home-title">📊 Centro de Diagnóstico (IA)</div></div>', unsafe_allow_html=True)
 
