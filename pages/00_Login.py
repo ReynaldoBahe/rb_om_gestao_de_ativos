@@ -38,25 +38,35 @@ footer { visibility: hidden !important; }
 .right-wrapper { max-width: 420px; margin: 0 auto; padding-top: 30px; }
 .login-card { background-color: #06182B !important; padding: 35px 30px !important; border-radius: 16px !important; border: 1px solid #103154 !important; box-shadow: 0 12px 40px rgba(0,0,0,0.6) !important; }
 
-/* Configuração base dos inputs */
-div[data-baseweb="input"], div[data-baseweb="input"] > div { background-color: #0C233C !important; border: 1px solid #1A446F !important; border-radius: 12px !important; height: 52px !important; }
-input { background-color: transparent !important; color: #FFFFFF !important; font-weight: 600 !important; font-size: 17px !important; }
+/* 🛠️ SOLUÇÃO DA TARJA: Trocamos o height fixo por padding interno para encorpar sem deformar o olhinho */
+div[data-baseweb="input"], div[data-baseweb="input"] > div { 
+    background-color: #0C233C !important; 
+    border: 1px solid #1A446F !important; 
+    border-radius: 12px !important; 
+    height: auto !important; 
+}
+input { 
+    background-color: transparent !important; 
+    color: #FFFFFF !important; 
+    font-weight: 600 !important; 
+    font-size: 17px !important; 
+    padding-top: 12px !important; 
+    padding-bottom: 12px !important; 
+}
 input::placeholder { color: #5F82A8 !important; font-size: 15px !important; }
 label { color: #8AB4F8 !important; font-weight: 700 !important; font-size: 15px !important; margin-bottom: 6px !important; display: block !important; }
 div[data-testid="stForm"] { border: none !important; padding: 0 !important; }
 
-/* 🛠️ REMOÇÃO TOTAL DO ADORNMENT AZUL ESTICADO NATIVO DO STREAMLIT */
-div[data-testid="stTextInputAdornment"], div[data-testid="stTextInputAdornment"] * { 
-    display: none !important; 
-    width: 0px !important; 
-    height: 0px !important; 
-    visibility: hidden !important; 
+/* Força transparência limpa em todo o bloco nativo do adornment de senha */
+div[data-testid="stTextInputAdornment"], div[data-testid="stTextInputAdornment"] *, div[data-baseweb="input"] button { 
+    background-color: transparent !important; 
+    background: transparent !important; 
+    border: none !important; 
+    box-shadow: none !important; 
+    color: #8AB4F8 !important; 
 }
 
-/* Garante que o input use o espaço inteiro que sobrou da remoção */
-div[data-baseweb="input"] > div:first-child { width: 100% !important; padding-right: 15px !important; }
-
-/* Aplica o azul apenas nos botões de formulário reais */
+/* Aplica o azul nos botões de formulário reais */
 div[data-testid="stForm"] button, .stButton button { background-color: #104A7E !important; color: #FFFFFF !important; border-radius: 12px !important; border: 1px solid #1A62A3 !important; font-weight: 800 !important; font-size: 17px !important; height: 52px !important; width: 100% !important; margin-top: 15px !important; box-shadow: 0 4px 15px rgba(16,74,126,0.4) !important; }
 div[data-testid="stForm"] button:hover { background-color: #165CA1 !important; }
 
@@ -120,7 +130,7 @@ with col_direita:
                 if st.form_submit_button("Confirmar", use_container_width=True):
                     user_info = lista_usuarios[st.session_state.usuario_validado]
                     if codigo == user_info["token"]:
-                        st.success("Acesso authorized!")
+                        st.success("Acesso autorizado!")
                         time.sleep(0.5)
                         st.session_state.logged_in = True
                         st.session_state.cliente_ativo = user_info["cliente"]
@@ -131,4 +141,3 @@ with col_direita:
                         st.error("Código incorreto.")
                         
     st.markdown('</div>', unsafe_allow_html=True)
-    st.markdown('<div class="ssl-footer">🔒 Conexão segura SSL <span style="color:#537BAB; margin-left:20px;">© 2026 DT Facilities O&M</span></div>', unsafe_allow_html=True)
