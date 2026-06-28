@@ -14,6 +14,11 @@ except KeyError:
     }
 
 css_code = """
+/* 1. BLINDAGEM E OCULTAÇÃO DE MENUS NATIVOS DO STREAMLIT */
+header[data-testid="stHeader"] { visibility: hidden !important; height: 0px !important; }
+div[data-testid="collapsedControl"] { display: none !important; }
+footer { visibility: hidden !important; }
+
 .stApp { background-color: #03111E !important; color: #FFFFFF !important; }
 .left-panel { padding: 30px 5px 15px 5px; text-align: center; }
 
@@ -45,15 +50,17 @@ label { color: #8AB4F8 !important; font-weight: 700 !important; font-size: 15px 
 
 div[data-testid="stForm"] { border: none !important; padding: 0 !important; }
 
-/* CORREÇÃO DO OLHINHO DA SENHA: Limpa o bloco azul e realinha o ícone */
+/* 2. CORREÇÃO CIRÚRGICA DO BOTÃO DO OLHINHO DE MOSTRAR SENHA */
 div[data-baseweb="input"] button {
     background-color: transparent !important;
     border: none !important;
     box-shadow: none !important;
-    height: auto !important;
+    height: 100% !important;
     width: auto !important;
     margin-top: 0px !important;
     color: #8AB4F8 !important;
+    padding-right: 15px !important;
+    padding-left: 15px !important;
 }
 div[data-baseweb="input"] button:hover {
     background-color: transparent !important;
@@ -79,6 +86,7 @@ div[data-testid="stNotification"] { background-color: #0C233C !important; border
 .resort-badge { background: #0A1E33; padding: 8px 16px; border-radius: 12px; font-weight: bold; font-size: 13px; border: 1px solid #143A63; color: #FFFFFF; }
 .verified-badge { background: rgba(0,210,255,0.08); color: #00D2FF; padding: 8px 16px; border-radius: 12px; font-size: 12px; border: 1px solid rgba(0,210,255,0.2); font-weight: 600; }
 .ssl-footer { color: #5F82A8; font-size: 12px; margin-top: 20px; display: flex; align-items: center; gap: 6px; justify-content: center; }
+</style>
 """
 
 st.markdown(f"<style>{css_code}</style>", unsafe_allow_html=True)
@@ -144,6 +152,4 @@ with col_direita:
                     else:
                         st.error("Código incorreto.")
                         
-    st.markdown('</div>', unsafe_allow_html=True)
-    st.markdown('<div class="ssl-footer">🔒 Conexão segura SSL <span style="color:#537BAB; margin-left:20px;">© 2026 DT Facilities O&M</span></div>', unsafe_allow_html=True)
     st.markdown('</div>', unsafe_allow_html=True)
