@@ -14,7 +14,6 @@ except KeyError:
     }
 
 css_code = """
-/* 1. BLINDAGEM E OCULTAÇÃO DE MENUS NATIVOS DO STREAMLIT */
 header[data-testid="stHeader"] { visibility: hidden !important; height: 0px !important; }
 div[data-testid="collapsedControl"] { display: none !important; }
 footer { visibility: hidden !important; }
@@ -50,8 +49,13 @@ label { color: #8AB4F8 !important; font-weight: 700 !important; font-size: 15px 
 
 div[data-testid="stForm"] { border: none !important; padding: 0 !important; }
 
-/* 2. CORREÇÃO CIRÚRGICA DO BOTÃO DO OLHINHO DE MOSTRAR SENHA */
-div[data-baseweb="input"] button {
+/* RECONSTRUÇÃO DO OLHINHO: Elimina o bloco azul interno e integra o botão de senha */
+div[data-testid="stTextInputAdornment"], div[data-testid="stTextInputAdornment"] > div {
+    background-color: transparent !important;
+    border: none !important;
+    height: 100% !important;
+}
+div[data-baseweb="input"] button, div[data-testid="stTextInputAdornment"] button {
     background-color: transparent !important;
     border: none !important;
     box-shadow: none !important;
@@ -60,9 +64,8 @@ div[data-baseweb="input"] button {
     margin-top: 0px !important;
     color: #8AB4F8 !important;
     padding-right: 15px !important;
-    padding-left: 15px !important;
 }
-div[data-baseweb="input"] button:hover {
+div[data-baseweb="input"] button:hover, div[data-testid="stTextInputAdornment"] button:hover {
     background-color: transparent !important;
     color: #00D2FF !important;
 }
@@ -150,6 +153,3 @@ with col_direita:
                         st.session_state.login_step = 1
                         st.rerun()
                     else:
-                        st.error("Código incorreto.")
-                        
-    st.markdown('</div>', unsafe_allow_html=True)
