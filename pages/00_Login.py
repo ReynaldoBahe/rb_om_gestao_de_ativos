@@ -62,12 +62,15 @@ with aba_login:
         conn.close()
 
         if usuario_valido:
-            # Seta exatamente as variáveis que seu app.py precisa para montar o menu
+            # Garante que o app.py original valide o login com sucesso
             st.session_state.logged_in = True
+            
+            # Alinha todas as variações de variáveis que os módulos usam para filtrar as planilhas
             st.session_state["username"] = username
+            st.session_state["user"] = username
+            st.session_state["usuario"] = username
             st.session_state["usuario_logado"] = username
             
-            # Avisa o usuário e força o app.py a reconstruir a navegação com o menu completo
             st.success("Login realizado com sucesso! Carregando painel...")
             st.rerun()
         else:
