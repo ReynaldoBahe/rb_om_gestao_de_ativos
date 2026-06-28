@@ -13,12 +13,12 @@ cliente_logado = st.session_state.get("cliente_ativo", "Nenhum")
 
 EMPREENDIMENTOS = {
     "Resort Boa Viagem": {
-        "speckle_id": "https://app.speckle.systems/projects/a649da7292/models/815af390c7?embedToken=3dfe60e987b76afb17cb3957b8e74548d076442196",
+        "speckle_url": "https://app.speckle.systems/projects/a649da7292/models/815af390c7?embedToken=3dfe60e987b76afb17cb3957b8e74548d076442196",
         "nome_exibicao": "Resort Boa Viagem - Complexo Hoteleiro",
         "arquivo_cmms": "CMMS_Export_RB - CMMS_RB.csv"
     },
     "Hospital Central": {
-        "speckle_id": "https://app.speckle.systems/projects/68bf6c4cd9/models/8246528aa7?embedToken=0d89925c39cda14a24e17c1dcf8fc0440534865ca7",
+        "speckle_url": "https://app.speckle.systems/projects/68bf6c4cd9/models/8246528aa7?embedToken=0d89925c39cda14a24e17c1dcf8fc0440534865ca7",
         "nome_exibicao": "Hospital Central - Centro Médico Operacional",
         "arquivo_cmms": "CMMS_Export_RB - CMMS_RB.csv" # Mude se tiver um CSV próprio depois
     }
@@ -26,7 +26,7 @@ EMPREENDIMENTOS = {
 
 if cliente_logado in EMPREENDIMENTOS:
     config = EMPREENDIMENTOS[cliente_logado]
-    SPECKLE_STREAM_ID = config["speckle_id"]
+    SPECKLE_STREAM_ID = config["speckle_url1"]
     NOME_PROJETO = config["nome_exibicao"]
     CAMINHO_CSV = config["arquivo_cmms"]
 else:
@@ -66,7 +66,7 @@ st.sidebar.write("---")
 arquivo_upload = st.sidebar.file_uploader("📂 Importar dados/OM", type=["csv", "xlsx"])
 
 # URL base do Speckle original aprovado
-speckle_base_url = f"https://speckle.systems{SPECKLE_STREAM_ID}"
+speckle_base_url = SPECKLE_STREAM_ID
 
 # Lógica de carregamento de dados segura e isolada
 if arquivo_upload is not None:
