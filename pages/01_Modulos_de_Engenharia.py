@@ -33,7 +33,7 @@ st.markdown('<div class="main-title">🏗️ Portal de Engenharia & Gestão de A
 # ==========================================
 # 3. BARRA LATERAL (FILTROS OPERACIONAIS E PAINEL DE CONTROLE)
 # ==========================================
-st.sidebar.header("Filtros de Visão")
+st.sidebar.header("Painel de controle")
 
 filtro_status = st.sidebar.selectbox("Filtrar por Status:", ["Todos", "Aberta", "Em Andamento", "Pausada", "Fechado"])
 filtro_criticidade = st.sidebar.selectbox("Filtrar por Criticidade:", ["Todos", "Alta", "Média", "Baixa"])
