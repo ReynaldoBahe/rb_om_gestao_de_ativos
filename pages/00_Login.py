@@ -1,6 +1,5 @@
 import streamlit as st
 import sqlite3
-import os
 
 st.set_page_config(page_title="Acesso", page_icon="🔐", layout="centered")
 
@@ -64,10 +63,11 @@ with aba_login:
 
         if usuario_valido:
             st.success("Login realizado com sucesso! Entrando...")
-            # Salva o usuário ativo na memória global
-            st.session_state["usuario_logado"] = username
             
-            # Atualiza o app para que a navegação do app.py libere o portal
+            # ATUALIZAÇÃO CRÍTICA: Altera a variável exata que o seu app.py espera receber
+            st.session_state.logged_in = True
+            
+            # Recarrega para o app.py montar o menu com "Menu Principal" e "Módulos Operacionais"
             st.rerun()
         else:
             st.error("Usuário ou senha incorretos.")
