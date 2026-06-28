@@ -84,7 +84,6 @@ os_abertas = 0
 
 if not df.empty:
     # Tratamento global das colunas: remove sublinhados e espaços extras para busca segura
-    colunas_originais = list(df.columns)
     df.columns = [str(c).strip().replace('_', ' ').title() for c in df.columns]
     colunas_minusculo = [str(c).lower().strip() for c in df.columns]
     
@@ -153,45 +152,47 @@ if not df.empty:
     with col_dados:
         st.markdown(f"**Relatório Preditivo de Falhas — {NOME_PROJETO}**")
         
-        with st.spinner("🤖 IA processando histórico de manutenção profundo..."):
+        # Bloco da IA totalmente blindado contra variações de formatos de células do Excel
+        sistema_gargalo = "Não identificado"
+        falhas_sistema = 0
+        custo_total = 0.0
+        preventivas = 0
+        corretivas = 0
+
+        try:
             colunas_minusculo = [str(c).lower().strip() for c in df.columns]
-            
-            # 1. Identificação do Sistema com Maior Volume de Falhas
             col_sistema = [df.columns[i] for i, c in enumerate(colunas_minusculo) if 'sistema' in c]
-            if col_sistema:
+            if col_sistema and not df[col_sistema[0]].empty:
                 v_counts = df[col_sistema[0]].value_counts()
                 if not v_counts.empty:
                     sistema_gargalo = str(v_counts.idxmax())
-                    falhas_sistema = v_counts.max()
-                else:
-                    sistema_gargalo = "Não identificado"
-                    falhas_sistema = 0
-            else:
-                sistema_gargalo = "Não identificado"
-                falhas_sistema = 0
+                    falhas_sistema = int(v_counts.max())
+        except Exception:
+            pass
 
-            # 2. Rastreamento e Conversão de Custos Financeiros (Moeda Brasileira)
+        try:
             col_custo_mat = [df.columns[i] for i, c in enumerate(colunas_minusculo) if 'custo material' in c or 'material' in c]
             col_custo_mo = [df.columns[i] for i, c in enumerate(colunas_minusculo) if 'custo mao' in c or 'obra' in c]
             
-            def limpar_e_somar(df_alvo, lista_cols):
-                if not lista_cols: return 0
-                sub_df = df_alvo[lista_cols[0]]
-                s_limpa = sub_df.astype(str).str.replace('R$', '', regex=False).str.replace('.', '', regex=False).str.replace(',', '.', regex=False).str.strip()
-                return pd.to_numeric(s_limpa, errors='coerce').sum()
+            def tratamento_moeda(sub_df, col_lista):
+                if not col_lista: return 0.0
+                valores = sub_df[col_lista[0]].astype(str).str.replace('R$', '', regex=False)
+                valores = valores.str.replace('.', '', regex=False).str.replace(',', '.', regex=False).str.strip()
+                return pd.to_numeric(valores, errors='coerce').sum()
+                
+            custo_total = tratamento_moeda(df, col_custo_mat) + tratamento_moeda(df, col_custo_mo)
+        except Exception:
+            custo_total = 0.0
 
-            custo_mat = limpar_e_somar(df, col_custo_mat)
-            custo_mo = limpar_e_somar(df, col_custo_mo)
-            custo_total = custo_mat + custo_mo
-
-            # 3. Mapeamento da Eficiência de O&M
+        try:
             col_tipo = [df.columns[i] for i, c in enumerate(colunas_minusculo) if 'tipo' in c]
             if col_tipo:
-                corretivas = len(df[df[col_tipo[0]] .astype(str).str.lower().str.contains('corretiva|corretivo', na=False)])
-                preventivas = len(df[df[col_tipo[0]] .astype(str).str.lower().str.contains('preventiva|preventivo', na=False)])
-            else:
-                corretivas, preventivas = 0, 0
+                corretivas = len(df[df[col_tipo[0]].astype(str).str.lower().str.contains('corretiva|corretivo', na=False)])
+                preventivas = len(df[df[col_tipo[0]].astype(str).str.lower().str.contains('preventiva|preventivo', na=False)])
+        except Exception:
+            pass
 
-            taxa_critica = (os_criticas / total_os * 100) if total_os > 0 else 0
-            
-            texto_custos = f"💰 **Impacto Financeiro:** Gasto total registrado de **R$ {custo_total:,.2f}** em materiais e MO." if custo_total > 0 else "💰 **Impacto Financeiro:** Sem custos financeiros vinculados no período."
+        taxa_critica = (os_criticas / total_os * 100) if total_os > 0 else 0
+        texto_custos = f"💰 **Impacto Financeiro:** Gasto total registrado de **R$ {custo_total:,.2f}** em materiais e MO." if custo_total > 0 else "💰 **Impacto Financeiro:** Sem custos financeiros adicionais computados para o período."
+        texto_gargalo = f"🔍 **Gargalo Físico:** O sistema mais instável é **{sistema_gargalo}**, concentrando {falhas_sistema} chamados abertos." if falhas_sistema > 0 else "🔍 **Gargalo Físico:** Distribuição homogênea entre os sistemas prediais cadastrados."
+        
