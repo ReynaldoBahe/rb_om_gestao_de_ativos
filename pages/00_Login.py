@@ -63,11 +63,12 @@ with aba_login:
         conn.close()
 
         if usuario_valido:
-            st.success("Login realizado com sucesso! Redirecionando...")
+            st.success("Login realizado com sucesso! Entrando...")
+            # Salva o usuário ativo na memória global
             st.session_state["usuario_logado"] = username
             
-            # Ajustado para usar o redirecionamento relativo correto no Streamlit Navigation
-            st.switch_page("pages/00_Login.py") # Força o recarregamento na navegação do app.py
+            # Atualiza o app para que a navegação do app.py libere o portal
+            st.rerun()
         else:
             st.error("Usuário ou senha incorretos.")
 
