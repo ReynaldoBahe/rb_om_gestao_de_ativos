@@ -5,10 +5,15 @@ import time
 if "login_step" not in st.session_state:
     st.session_state.login_step = 1
 
-# --- CREDENCIAIS TEMPORÁRIAS ---
-USER_CORRETO = "engenharia@empresa.com"
-SENHA_CORRETA = "senha123"
-CODIGO_2FA_CORRETO = "123456"
+# --- CREDENCIAIS SEGURAS VIA STREAMLIT SECRETS ---
+try:
+    USER_CORRETO = st.secrets["auth"]["user_email"]
+    SENHA_CORRETA = st.secrets["auth"]["user_password"]
+    CODIGO_2FA_CORRETO = st.secrets["auth"]["token_2fa"]
+except KeyError:
+    USER_CORRETO = "engenharia@empresa.com"
+    SENHA_CORRETA = "senha123"
+    CODIGO_2FA_CORRETO = "123456"
 
 # --- INJEÇÃO DE CSS COMPLETA (DARK MODE CORPORATIVO) ---
 st.markdown("""
