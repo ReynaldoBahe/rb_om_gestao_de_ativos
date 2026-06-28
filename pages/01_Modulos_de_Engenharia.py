@@ -108,7 +108,22 @@ st.components.v1.html(f'<iframe src="{speckle_base_url}" width="100%" height="60
 # =========================================================================
 # 6. CENTRO DE DIAGNÓSTICO E ANALYTICS (IA MULTI-CLIENTE & FINANCEIRO)
 # =========================================================================
+# Inicialização padrão das variáveis de controle para evitar quebras visuais
+os_selecionada = "Todas as Ordens (Análise Geral)"
+analise_individual = False
+df_analise = df.copy() if not df.empty else pd.DataFrame()
+
+total_os = len(df_analise)
+os_criticas = 0
+os_abertas = 0
+custo_total = 0.0
+
+col_status = []
+col_criticidade = []
+col_descricao_ativo = []
+
 if not df.empty:
+    # 6.1. CONFIGURAÇÃO DO SELETOR EXCLUSIVO DE OS NA BARRA LATERAL
     col_id_os = [c for c in df.columns if c.lower() == 'os']
     if not col_id_os:
         col_id_os = [c for c in df.columns if 'os' in c.lower() or 'numero' in c.lower()]
@@ -122,17 +137,12 @@ if not df.empty:
     
     os_selecionada = st.sidebar.selectbox("Selecione uma OS específica para auditoria:", opcoes_os)
     
-    df_analise = df.copy()
-    analise_individual = False
-    
     if os_selecionada != "Todas as Ordens (Análise Geral)" and col_id_os:
-        df_analise = df[df[col_id_os[0]].astype(str) == os_selecionada]
+        df_analise = df[df[col_id_os[0]].astype(str) == os_selecionada].copy()
         analise_individual = True
 
+    # --- MAPEAMENTO SEGURO DE COLUNAS CHAVE ---
     total_os = len(df_analise)
-    os_criticas = 0
-    os_abertas = 0
-
     col_status = [c for c in df_analise.columns if 'status' in c.lower()]
     col_criticidade = [c for c in df_analise.columns if 'criticidade' in c.lower()]
     col_descricao_ativo = [c for c in df_analise.columns if 'desc' in c.lower() or 'ativo' in c.lower() or 'equip' in c.lower()]
@@ -142,6 +152,7 @@ if not df.empty:
     if col_status:
         os_abertas = len(df_analise[df_analise[col_status[0]].astype(str).str.lower().str.contains('aberta|em andamento|andamento', na=False)])
 
+    # --- LIMPEZA E CÁLCULO DE CUSTOS FINACEIROS ---
     col_custo_mat = [c for c in df_analise.columns if 'material' in c.lower()]
     col_custo_mo = [c for c in df_analise.columns if 'obra' in c.lower() or 'mao' in c.lower()]
     df_analise['Custo_Total_Calculado'] = 0.0
@@ -155,10 +166,14 @@ if not df.empty:
         df_analise['Custo_Total_Calculado'] += limpar_coluna_moeda(df_analise[col_custo_mat[0]])
     if col_custo_mo:
         df_analise['Custo_Total_Calculado'] += limpar_coluna_moeda(df_analise[col_custo_mo[0]])
+        
+    custo_total = df_analise['Custo_Total_Calculado'].sum()
 
+# 6.2. INTERFACE PRINCIPAL DO CENTRO DE DIAGNÓSTICO (ESTRUTURA FORA DO EMBEDDING BLOQUEANTE)
 st.markdown('<div class="card-home"><div class="card-home-title">📊 Centro de Diagnóstico Avançado (IA & Custos)</div></div>', unsafe_allow_html=True)
 
-if not df.empty:
+if not df_analise.empty:
+    # Renderização garantida dos cartões numéricos no topo da área analítica
     m1, m2, m3 = st.columns(3)
     with m1:
         st.metric(label="Total de Ordens de Serviço", value=total_os)
@@ -204,3 +219,72 @@ if not df.empty:
                     y=alt.Y(f'{col_descricao_ativo[0]}:N', title='Ativo/Equipamento', sort='-x')
                 ).properties(height=250)
                 st.altair_chart(chart_custo, use_container_width=True)
+            else:
+                st.info("Coluna de identificação do Ativo não localizada.")
+            
+    with col_dados:
+        sistema_gargalo = "Não identificado"
+        falhas_sistema = 0
+        preventivas = 0
+        corretivas = 0
+
+        col_setor = [c for c in df_analise.columns if 'setor' in c.lower() or 'sistema' in c.lower()]
+        if col_setor and not df_analise[col_setor[0]].empty:
+            v_counts = df_analise[col_setor[0]].value_counts()
+            if not v_counts.empty:
+                sistema_gargalo = str(v_counts.idxmax())
+                falhas_sistema = int(v_counts.max())
+
+        col_tipo = [c for c in df_analise.columns if 'tipo' in c.lower()]
+        if col_tipo:
+            corretivas = len(df_analise[df_analise[col_tipo[0]].astype(str).str.lower().str.contains('corretiva|corretivo', na=False)])
+            preventivas = len(df_analise[df_analise[col_tipo[0]].astype(str).str.lower().str.contains('preventiva|preventivo', na=False)])
+
+        if analise_individual:
+            st.markdown(f"**Laudo de Auditoria Técnico-Financeira — OS {os_selecionada}**")
+            ativo_nome = str(df_analise[col_descricao_ativo[0]].iloc[0]) if col_descricao_ativo else "Ativo não identificado"
+            
+            if custo_total > 0:
+                st.warning(f"""
+                ### ⚖️ PARECER DE CUSTO POR ATIVO
+                Esta OS individualizou despesas diretamente para o ativo: **{ativo_nome}**.
+                
+                *   **Setor Responsável:** {sistema_gargalo}.
+                *   **Impacto Financeiro:** **R$ {custo_total:,.2f}** alocados nesta quebra.
+                
+                🎯 **Alinhamento Financeiro:** O setor de contas pode conciliar este valor com as notas de empenho de materiais ou serviços emitidos para o setor de *{sistema_gargalo}*, garantindo a rastreabilidade perfeita por máquina.
+                """)
+            else:
+                st.info(f"### 📋 CADASTRO TÉCNICO\nOrdem {os_selecionada} vinculada a **{ativo_nome}** sem custos financeiros faturados até o momento.")
+        else:
+            st.markdown(f"**Relatório Preditivo de Falhas — {NOME_PROJETO}**")
+            taxa_critica = (os_criticas / total_os * 100) if total_os > 0 else 0
+            texto_gargalo = f"🔍 **Gargalo Físico:** O setor com mais chamados é **{sistema_gargalo}**, concentrando {falhas_sistema} registros." if falhas_sistema > 0 else "🔍 **Gargalo Físico:** Distribuição equilibrada entre setores."
+            texto_custos = f"💰 **Sintonia Financeira:** Despesa total real de **R$ {custo_total:,.2f}** rastreada por ativo na aba ao lado." if custo_total > 0 else "💰 **Sintonia Financeira:** Sem despesas financeiras mapeadas."
+            
+            if taxa_critica > 30:
+                st.error(f"""
+                ### ❌ ALERTA OPERACIONAL DE IA
+                Sobrecarga identificada nas rotinas de engenharia de **{NOME_PROJETO}**.
+                
+                {texto_gargalo}  
+                {texto_custos}
+                
+                🚨 **PREDIÇÃO:** Alto custo focado em *{sistema_gargalo}*. Recomenda-se auditoria conjunta (Manutenção + Financeiro) para criar preventivas e frear despesas emergenciais.
+                """)
+            else:
+                st.success(f"""
+                ### ✅ DIAGNÓSTICO DE SAÚDE OPERACIONAL
+                O ecossistema técnico de **{NOME_PROJETO}** opera em conformidade.
+                
+                {texto_gargalo}  
+                {texto_custos}
+                
+                🔮 **MÉTRICA PREDITIVA:** Relação de **{preventivas}** rotinas preventivas para **{corretivas}** intervenções corretivas. Custos equilibrados por ativo.
+                """)
+
+    st.write("---")
+    st.markdown("### Visualização Completa do Banco de Dados Filtrado")
+    st.dataframe(df_analise, use_container_width=True)
+else:
+    st.info("Nenhum dado cadastrado para exibição analítica de tabelas neste empreendimento.")
