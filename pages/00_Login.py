@@ -8,7 +8,6 @@ st.set_page_config(page_title="Acesso", page_icon="🔐", layout="centered")
 DB_FILE = "usuarios.db"
 
 def inicializar_banco():
-    # Cria o arquivo de banco de dados se ele não existir
     conn = sqlite3.connect(DB_FILE)
     cursor = conn.cursor()
     cursor.execute("""
@@ -17,7 +16,6 @@ def inicializar_banco():
             senha TEXT
         )
     """)
-    # Cria um usuário admin padrão se o banco estiver vazio
     cursor.execute("SELECT * FROM usuarios WHERE usuario = 'admin'")
     if not cursor.fetchone():
         cursor.execute("INSERT INTO usuarios (usuario, senha) VALUES ('admin', '1234')")
@@ -65,7 +63,11 @@ with aba_login:
         conn.close()
 
         if usuario_valido:
-            st.success(f"Login realizado com sucesso! Bem-vindo, {username}.")
+            st.success("Login realizado com sucesso! Redirecionando...")
+            st.session_state["usuario_logado"] = username
+            
+            # ---> LINHA DO REDIRECIONAMENTO (Mude "app.py" se o seu portal tiver outro nome)
+            st.switch_page("app.py") 
         else:
             st.error("Usuário ou senha incorretos.")
 
@@ -86,15 +88,11 @@ with aba_cadastro:
         else:
             conn = sqlite3.connect(DB_FILE)
             cursor = conn.cursor()
-            
-            # Verifica se já existe
             cursor.execute("SELECT * FROM usuarios WHERE usuario = ?", (novo_usuario,))
             if cursor.fetchone():
                 st.warning("Este usuário já está cadastrado.")
             else:
-                # Salva permanentemente no banco de dados
                 cursor.execute("INSERT INTO usuarios (usuario, senha) VALUES (?, ?)", (novo_usuario, nova_senha))
                 conn.commit()
-                st.success("Conta criada e salva com sucesso! Pode mudar de aba e fazer o login.")
-            
+                st.success("Conta criada com sucesso! Pode mudar de aba e fazer o login.")
             conn.close()
