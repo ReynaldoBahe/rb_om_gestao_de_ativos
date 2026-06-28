@@ -123,8 +123,11 @@ if not df.empty:
     st.sidebar.write("---")
     st.sidebar.markdown("### 🎯 Foco da Análise (IA)")
     opcoes_os = ["Todas as Ordens (Análise Geral)"]
+    
+    # CORREÇÃO AQUI: Pegamos o primeiro elemento da lista col_id_os[0] para tratar como coluna/Série
     if col_id_os:
-        opcoes_os.extend(df[col_id_os].dropna().astype(str).unique().tolist())
+        nome_coluna_os = col_id_os[0]
+        opcoes_os.extend(df[nome_coluna_os].dropna().astype(str).unique().tolist())
     
     os_selecionada = st.sidebar.selectbox("Selecione uma OS específica para auditoria:", opcoes_os)
     
@@ -133,7 +136,7 @@ if not df.empty:
     analise_individual = False
     
     if os_selecionada != "Todas as Ordens (Análise Geral)" and col_id_os:
-        df_analise = df[df[col_id_os].astype(str) == os_selecionada]
+        df_analise = df[df[col_id_os[0]].astype(str) == os_selecionada]
         analise_individual = True
 
     # --- MÉTRICAS DINÂMICAS BASEADAS NA SELEÇÃO ---
