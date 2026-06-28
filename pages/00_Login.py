@@ -34,7 +34,6 @@ st.markdown(
         color: #00ffff !important;
         font-size: 18px !important;
         font-weight: bold !important;
-        background-color: transparent !important;
     }
     div[data-testid="stCheckbox"] input[type="checkbox"]:checked + div {
         background-color: #00ffff !important;
@@ -63,15 +62,18 @@ with aba_login:
         conn.close()
 
         if usuario_valido:
-            # 1. Libera o acesso para a raiz do app.py
             st.session_state.logged_in = True
-            
-            # 2. Injeta o e-mail que o cabeçalho dos seus módulos exibe
             st.session_state["user_email"] = username
             st.session_state["username"] = username
             
-            # 3. UNIFICAÇÃO CRÍTICA: Todo mundo que logar acessa o Resort Boa Viagem
-            st.session_state["cliente_ativo"] = "Resort Boa Viagem"
+            # --- REGRA DE DIVISÃO EXATA DE EMPREENDIMENTOS ---
+            if "reynaldo" in username.lower():
+                st.session_state["cliente_ativo"] = "Hospital Central"
+            elif username.lower() == "admin":
+                st.session_state["cliente_ativo"] = "Resort Boa Viagem"
+            else:
+                # Caso você crie outros usuários no futuro, eles caem no Resort por padrão
+                st.session_state["cliente_ativo"] = "Resort Boa Viagem"
             
             st.success("Login realizado com sucesso! Carregando painel...")
             st.rerun()
