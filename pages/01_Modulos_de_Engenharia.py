@@ -14,7 +14,7 @@ cliente_logado = st.session_state.get("cliente_ativo", "Nenhum")
 # Dicionário com os links completos de incorporação em formato bruto seguro (Raw)
 EMPREENDIMENTOS = {
     "Resort Boa Viagem": {
-        "speckle_url": r"https://speckle.systems",
+        "speckle_url": r"https://app.speckle.systems/projects/68bf6c4cd9/models/8246528aa7?embedToken=d8bb03135c8a1b0bde90b7d8ca6c44274647140862",
         "nome_exibicao": "Resort Boa Viagem - Complexo Hoteleiro",
         "arquivo_cmms": "CMMS_Export_RB - CMMS_RB.csv"
     },
