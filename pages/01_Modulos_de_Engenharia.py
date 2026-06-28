@@ -83,32 +83,31 @@ os_criticas = 0
 os_abertas = 0
 
 if not df.empty:
-    # Cria uma cópia com nomes tratados para filtros e gráficos, sem apagar sublinhados originais
+    # Padronização limpa das colunas substituindo sublinhados por espaços
     df.columns = [str(c).strip().replace('_', ' ').title() for c in df.columns]
-    colunas_minusculo = [str(c).lower().strip() for c in df.columns]
     
-    col_status_idx = [i for i, c in enumerate(colunas_minusculo) if 'status' in c]
-    col_crit_idx = [i for i, c in enumerate(colunas_minusculo) if 'criticidade' in c]
+    # Encontra os nomes exatos das colunas chaves de forma segura
+    col_status = [c for c in df.columns if 'status' in c.lower()]
+    col_criticidade = [c for c in df.columns if 'criticidade' in c.lower()]
     
-    if col_crit_idx:
-        nome_col_crit = df.columns[col_crit_idx[0]]
-        os_criticas = len(df[df[nome_col_crit].astype(str).str.lower().str.contains('alta', na=False)])
+    if col_criticidade:
+        os_criticas = len(df[df[col_criticidade[0]].astype(str).str.lower().str.contains('alta', na=False)])
         
-    if col_status_idx:
-        nome_col_status = df.columns[col_status_idx[0]]
-        os_abertas = len(df[df[nome_col_status].astype(str).str.lower().str.contains('aberta|em andamento|andamento', na=False)])
+    if col_status:
+        os_abertas = len(df[df[col_status[0]].astype(str).str.lower().str.contains('aberta|em andamento|andamento', na=False)])
 
-    if col_status_idx and filtro_status != "Todos":
-        df = df[df[df.columns[col_status_idx[0]]].astype(str).str.lower() == filtro_status.lower()]
-    if col_crit_idx and filtro_criticidade != "Todos":
-        df = df[df[df.columns[col_crit_idx[0]]].astype(str).str.lower() == filtro_criticidade.lower()]
+    # Aplicação dos filtros interativos
+    if col_status and filtro_status != "Todos":
+        df = df[df[col_status[0]].astype(str).str.lower() == filtro_status.lower()]
+    if col_criticidade and filtro_criticidade != "Todos":
+        df = df[df[col_criticidade[0]].astype(str).str.lower() == filtro_criticidade.lower()]
 
 # =========================================================================
 # 5. VISUALIZADOR 3D INTEGRADO (SPECKLE EMBED)
 # =========================================================================
 st.markdown('<div class="card-home"><div class="card-home-title">Visualizador Operacional de Ativos 3D</div></div>', unsafe_allow_html=True)
 
-speckle_base_url = SPECKLE_STREAM_ID
+speckle_base_url = SPEKL_STREAM_ID = SPECKLE_STREAM_ID
 st.components.v1.html(f'<iframe src="{speckle_base_url}" width="100%" height="600" frameborder="0"></iframe>', height=602)
 
 # =========================================================================
@@ -131,19 +130,18 @@ if not df.empty:
     
     with col_grafico:
         st.markdown("**Distribuição de Ordens por Criticidade e Status**")
-        colunas_minusculo = [str(c).lower().strip() for c in df.columns]
-        idx_s = [df.columns[i] for i, c in enumerate(colunas_minusculo) if 'status' in c]
-        idx_c = [df.columns[i] for i, c in enumerate(colunas_minusculo) if 'criticidade' in c]
+        col_s = [c for c in df.columns if 'status' in c.lower()]
+        col_c = [c for c in df.columns if 'criticidade' in c.lower()]
         
-        if idx_s and idx_c:
+        if col_s and col_c:
             chart = alt.Chart(df).mark_bar().encode(
-                x=alt.X(f'{idx_s[0]}:N', title='Status da OS'),
+                x=alt.X(f'{col_s[0]}:N', title='Status da OS'),
                 y=alt.Y('count():Q', title='Quantidade de Ativos'),
-                color=alt.Color(f'{idx_c[0]}:N', scale=alt.Scale(domain=['Alta', 'Média', 'Baixa'], range=['#DC2626', '#F59E0B', '#10B981']))
+                color=alt.Color(f'{col_c[0]}:N', scale=alt.Scale(domain=['Alta', 'Média', 'Baixa'], range=['#DC2626', '#F59E0B', '#10B981']))
             ).properties(height=300)
             st.altair_chart(chart, use_container_width=True)
         else:
-            st.info("Colunas de Status ou Criticidade não mapeadas para exibição gráfica.")
+            st.info("Colunas de Status ou Criticidade não localizadas para o gráfico.")
             
     with col_dados:
         st.markdown(f"**Relatório Preditivo de Falhas — {NOME_PROJETO}**")
@@ -154,37 +152,37 @@ if not df.empty:
         corretivas = 0
         custo_total = 0.0
 
-        colunas_minusculo = [str(c).lower().strip() for c in df.columns]
-        
-        # 1. Identificação por Setor (Climatização/Elétrica/Mecânica)
-        col_sistema = [df.columns[i] for i, c in enumerate(colunas_minusculo) if 'setor' in c or 'sistema' in c]
-        if col_sistema and not df[col_sistema].empty:
-            v_counts = df[col_sistema[0]].value_counts()
+        # 1. Identificação do Setor (Climatização/Elétrica/Mecânica)
+        col_setor = [c for c in df.columns if 'setor' in c.lower() or 'sistema' in c.lower()]
+        if col_setor and not df[col_setor[0]].empty:
+            v_counts = df[col_setor[0]].value_counts()
             if not v_counts.empty:
                 sistema_gargalo = str(v_counts.idxmax())
                 falhas_sistema = int(v_counts.max())
 
-        # 2. Conversão segura de moedas brasileras e custos
-        col_custo_mat = [df.columns[i] for i, c in enumerate(colunas_minusculo) if 'material' in c]
-        col_custo_mo = [df.columns[i] for i, c in enumerate(colunas_minusculo) if 'obra' in c or 'mao' in c]
+        # 2. Conversão segura de moedas e soma de custos
+        col_custo_mat = [c for c in df.columns if 'material' in c.lower()]
+        col_custo_mo = [c for c in df.columns if 'obra' in c.lower() or 'mao' in c.lower()]
         
-        def processar_moeda(sub_df, lista_cols):
-            if not lista_cols: return 0.0
-            serie_limpa = sub_df[lista_cols[0]].astype(str).str.replace('R$', '', regex=False)
-            serie_limpa = serie_limpa.str.replace('.', '', regex=False).str.replace(',', '.', regex=False).str.strip()
-            return pd.to_numeric(serie_limpa, errors='coerce').sum()
+        def limpar_moeda_safe(serie_alvo):
+            s_str = serie_alvo.astype(str).str.replace('R$', '', regex=False)
+            s_str = s_str.str.replace('.', '', regex=False).str.replace(',', '.', regex=False).str.strip()
+            return pd.to_numeric(s_str, errors='coerce').sum()
             
-        custo_total = processar_moeda(df, col_custo_mat) + processar_moeda(df, col_custo_mo)
+        if col_custo_mat:
+            custo_total += limpar_moeda_safe(df[col_custo_mat[0]])
+        if col_custo_mo:
+            custo_total += limpar_moeda_safe(df[col_custo_mo[0]])
 
         # 3. Mapeamento da Eficiência de O&M
-        col_tipo = [df.columns[i] for i, c in enumerate(colunas_minusculo) if 'tipo' in c]
+        col_tipo = [c for c in df.columns if 'tipo' in c.lower()]
         if col_tipo:
             corretivas = len(df[df[col_tipo[0]].astype(str).str.lower().str.contains('corretiva|corretivo', na=False)])
             preventivas = len(df[df[col_tipo[0]].astype(str).str.lower().str.contains('preventiva|preventivo', na=False)])
 
         taxa_critica = (os_criticas / total_os * 100) if total_os > 0 else 0
-        texto_gargalo = f"🔍 **Gargalo Físico:** O setor mais instável é **{sistema_gargalo}**, concentrando {falhas_sistema} ordens em andamento." if falhas_sistema > 0 else "🔍 **Gargalo Físico:** Distribuição estável de chamados."
-        texto_custos = f"💰 **Impacto Financeiro:** Acumulado de **R$ {custo_total:,.2f}** investidos em manutenção corretiva/preventiva." if custo_total > 0 else "💰 **Impacto Financeiro:** Sem despesas extras vinculadas nesta amostragem."
+        texto_gargalo = f"🔍 **Gargalo Físico:** O setor com mais chamados é **{sistema_gargalo}**, concentrando {falhas_sistema} registros." if falhas_sistema > 0 else "🔍 **Gargalo Físico:** Distribuição equilibrada entre setores."
+        texto_custos = f"💰 **Impacto Financeiro:** Gasto acumulado de **R$ {custo_total:,.2f}** registrado em insumos e MO." if custo_total > 0 else "💰 **Impacto Financeiro:** Sem registros de despesas financeiras atreladas nesta amostragem."
         
         if taxa_critica > 30:
             st.error(f"""
@@ -194,3 +192,13 @@ if not df.empty:
             {texto_gargalo}  
             {texto_custos}
             
+            🚨 **PREDIÇÃO:** O volume de falhas críticas em *{sistema_gargalo}* aponta risco iminente de parada forçada ou perda severa de eficiência operacional nos próximos 7 dias.
+            
+            *   **Ação:** Direcionar equipe técnica focada para mitigar as quebras desse setor e providenciar as peças necessárias.
+            """)
+        else:
+            st.success(f"""
+            ### ✅ DIAGNÓSTICO DE SAÚDE OPERACIONAL
+            O ecossistema técnico de **{NOME_PROJETO}** opera em conformidade.
+            
+            {texto_gargalo}  
