@@ -40,7 +40,7 @@ filtro_criticidade = st.sidebar.selectbox("Filtrar por Criticidade:", ["Todos", 
 filtro_tempo = st.sidebar.selectbox("Filtrar por Tempo Aberta:", ["Todos", "Menos de 24h", "Entre 2 e 7 dias", "Mais de 7 dias"])
 
 st.sidebar.write("---")
-arquivo_upload = st.sidebar.file_uploader("📂 Carregar Planilha de Ativos/OM", type=["csv", "xlsx"])
+arquivo_upload = st.sidebar.file_uploader("📂 Importar dados/OM", type=["csv", "xlsx"])
 
 # URL base do Speckle original aprovado
 speckle_base_url = "https://app.speckle.systems/projects/a649da7292/models/815af390c7?embedToken=5fc6fc722186f65bfe3c4be3286713af5a1ab94df3"
