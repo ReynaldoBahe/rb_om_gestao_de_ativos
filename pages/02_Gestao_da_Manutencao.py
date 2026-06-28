@@ -79,6 +79,7 @@ df_pcm = df.copy() if not df.empty else pd.DataFrame()
 col_status_name = ""
 col_tipo_name = ""
 col_setor_name = ""
+col_abertura_name = ""
 
 if not df.empty:
     # Padronização das colunas
@@ -88,10 +89,12 @@ if not df.empty:
     col_status = [c for c in df.columns if 'status' in c.lower()]
     col_tipo = [c for c in df.columns if 'tipo' in c.lower()]
     col_setor = [c for c in df.columns if 'setor' in c.lower() or 'sistema' in c.lower()]
+    col_abertura = [c for c in df.columns if 'abertura' in c.lower() or 'inicio' in c.lower()]
     
-    col_status_name = col_status[0] if col_status else ""
-    col_tipo_name = col_tipo[0] if col_tipo else ""
-    col_setor_name = col_setor[0] if col_setor else ""
+    col_status_name = col_status if col_status else ""
+    col_tipo_name = col_tipo if col_tipo else ""
+    col_setor_name = col_setor if col_setor else ""
+    col_abertura_name = col_abertura if col_abertura else ""
 
     # Aplica filtro interativo por tipo se selecionado na sidebar
     if col_tipo_name and filtro_tipo_manut != "Todos":
@@ -113,6 +116,12 @@ if not df.empty:
         ])
         taxa_cumprimento_prev = (preventivas_concluidas / total_preventivas * 100) if total_preventivas > 0 else 100.0
 
+    # --- PROCESSAMENTO TEMPORAL PARA TENDÊNCIA ---
+    if col_abertura_name:
+        df_pcm['Data_Abertura_Convertida'] = pd.to_datetime(df_pcm[col_abertura_name], errors='coerce')
+        # Cria um formato de ordenação string de ano e mês (Ex: 2026-06)
+        df_pcm['Mes_Ano'] = df_pcm['Data_Abertura_Convertida'].dt.to_period('M').astype(str)
+
 # =========================================================================
 # 5. INTERFACE PRINCIPAL DO PCM
 # =========================================================================
@@ -131,7 +140,8 @@ if not df_pcm.empty:
     col_grafico, col_dados = st.columns([1.2, 1.0])
     
     with col_grafico:
-        tab_setor, tab_tipo = st.tabs(["📊 Carga por Setor", "🔄 Mix de Manutenção"])
+        # INCLUSÃO DA NOVA ABA DE TENDÊNCIA AQUI
+        tab_setor, tab_tipo, tab_tendencia = st.tabs(["📊 Carga por Setor", "🔄 Mix de Manutenção", "📈 Tendência Temporal"])
         
         with tab_setor:
             st.markdown("**Ordens de Serviço por Setor Técnico**")
@@ -155,6 +165,21 @@ if not df_pcm.empty:
                 st.altair_chart(chart_mix, use_container_width=True)
             else:
                 st.info("Dados de estratégia de manutenção indisponíveis.")
+                
+        with tab_tendencia:
+            st.markdown("**Evolução Mensal na Geração de Novas Ordens de Serviço**")
+            if col_abertura_name and 'Mes_Ano' in df_pcm.columns:
+                # Agrupa a quantidade total de chamados abertos mês a mês
+                df_tendencia_pcm = df_pcm.groupby('Mes_Ano').size().reset_index(name='Volume_Ordens')
+                
+                chart_tendencia_linha = alt.Chart(df_tendencia_pcm).mark_line(color='#1E3A8A', point=True).encode(
+                    x=alt.X('Mes_Ano:N', title='Período (Mês/Ano)', sort='x'),
+                    y=alt.Y('Volume_Ordens:Q', title='Novos Chamados Registrados'),
+                    tooltip=['Mes_Ano', 'Volume_Ordens']
+                ).properties(height=250)
+                st.altair_chart(chart_tendencia_linha, use_container_width=True)
+            else:
+                st.info("Datas de abertura indisponíveis para traçar a linha de tendência histórica.")
             
     with col_dados:
         st.markdown(f"**Parecer da IA sobre o Plano de PCM — {NOME_PROJETO}**")
@@ -171,23 +196,3 @@ if not df_pcm.empty:
             Plano de manutenção preventiva comprometido em **{NOME_PROJETO}**.
             
             *   **Diagnóstico:** A taxa de execução de preventivas está em **{taxa_cumprimento_prev:.1f}%**, ficando abaixo da meta regulatória (Meta >= 90%). 
-            *   **Impacto Real:** A equipe está consumindo energia resolvendo quebras no setor de **{sistema_gargalo}** e deixando as vistorias preventivas acumularem.
-            
-            🚨 **Ação Sugerida:** Pausar ordens estéticas e focar no fechamento de preventivas em atraso na próxima semana.
-            """)
-        else:
-            st.success(f"""
-            ### ✅ CONTROLE DE FLUXO EFICIENTE
-            A rotina de PCM demonstra alto índice de maturidade operacional.
-            
-            *   **Diagnóstico:** Execução estável com **{taxa_cumprimento_prev:.1f}%** das preventivas cumpridas dentro do prazo de O&M.
-            *   **Gestão de Carga:** O volume de **{om_abertas_backlog} ordens em aberto** está pulverizado de forma saudável e o sistema **{sistema_gargalo}** segue monitorado.
-            
-            👍 **Orientação:** Manter o balanceamento atual de homens-hora sem necessidade de horas extras na equipe.
-            """)
-
-    st.write("---")
-    st.markdown("### Quadro de Ordens Filtrado por Escopo de PCM")
-    st.dataframe(df_pcm, use_container_width=True)
-else:
-    st.info("Nenhum dado cadastrado para exibição de PCM neste empreendimento.")
