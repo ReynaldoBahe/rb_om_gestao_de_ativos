@@ -37,19 +37,32 @@ footer { visibility: hidden !important; }
 .tags-footer { font-size: 14px !important; color: #8AB4F8 !important; letter-spacing: 1px !important; font-weight: 700 !important; margin-top: 20px; }
 .right-wrapper { max-width: 420px; margin: 0 auto; padding-top: 30px; }
 .login-card { background-color: #06182B !important; padding: 35px 30px !important; border-radius: 16px !important; border: 1px solid #103154 !important; box-shadow: 0 12px 40px rgba(0,0,0,0.6) !important; }
+
+/* Configuração base dos inputs */
 div[data-baseweb="input"], div[data-baseweb="input"] > div { background-color: #0C233C !important; border: 1px solid #1A446F !important; border-radius: 12px !important; height: 52px !important; }
 input { background-color: transparent !important; color: #FFFFFF !important; font-weight: 600 !important; font-size: 17px !important; }
 input::placeholder { color: #5F82A8 !important; font-size: 15px !important; }
 label { color: #8AB4F8 !important; font-weight: 700 !important; font-size: 15px !important; margin-bottom: 6px !important; display: block !important; }
 div[data-testid="stForm"] { border: none !important; padding: 0 !important; }
 
-/* RESET COMPLETO DO ADORNMENT DO OLHINHO SEM ANINHAMENTO QUEBRANTE */
-div[data-testid="stTextInputAdornment"] { background-color: transparent !important; border: none !important; }
-div[data-testid="stTextInputAdornment"] button { background-color: transparent !important; border: none !important; box-shadow: none !important; height: 100% !important; margin-top: 0px !important; color: #8AB4F8 !important; padding-right: 15px !important; }
+/* 🛠️ CORREÇÃO DEFINITIVA DO OLHINHO: Remove qualquer fundo do botão interno */
+div[data-testid="stTextInputAdornment"], div[data-testid="stTextInputAdornment"] button, div[data-baseweb="input"] button { 
+    background-color: transparent !important; 
+    background: transparent !important;
+    border: none !important; 
+    box-shadow: none !important; 
+    height: 100% !important; 
+    margin-top: 0px !important; 
+    color: #8AB4F8 !important; 
+    padding-right: 10px !important;
+    width: auto !important;
+}
 div[data-testid="stTextInputAdornment"] button:hover { color: #00D2FF !important; background-color: transparent !important; }
 
-div[data-testid="stForm"] button, .stButton button, button { background-color: #104A7E !important; color: #FFFFFF !important; border-radius: 12px !important; border: 1px solid #1A62A3 !important; font-weight: 800 !important; font-size: 17px !important; height: 52px !important; width: 100% !important; margin-top: 15px !important; box-shadow: 0 4px 15px rgba(16,74,126,0.4) !important; }
+/* Aplica o azul apenas nos botões de formulário reais (Sem tocar no olhinho) */
+div[data-testid="stForm"] button, .stButton button { background-color: #104A7E !important; color: #FFFFFF !important; border-radius: 12px !important; border: 1px solid #1A62A3 !important; font-weight: 800 !important; font-size: 17px !important; height: 52px !important; width: 100% !important; margin-top: 15px !important; box-shadow: 0 4px 15px rgba(16,74,126,0.4) !important; }
 div[data-testid="stForm"] button:hover { background-color: #165CA1 !important; }
+
 div[data-testid="stNotification"] { background-color: #0C233C !important; border: 1px solid #1A446F !important; color: #FFFFFF !important; border-radius: 12px !important; }
 .top-header { display: flex; justify-content: space-between; align-items: center; margin-bottom: 20px; }
 .resort-badge { background: #0A1E33; padding: 8px 16px; border-radius: 12px; font-weight: bold; font-size: 13px; border: 1px solid #143A63; color: #FFFFFF; }
@@ -121,4 +134,3 @@ with col_direita:
                         st.error("Código incorreto.")
                         
     st.markdown('</div>', unsafe_allow_html=True)
-    st.markdown('<div class="ssl-footer">🔒 Conexão segura SSL <span style="color:#537BAB; margin-left:20px;">© 2026 DT Facilities O&M</span></div>', unsafe_allow_html=True)
