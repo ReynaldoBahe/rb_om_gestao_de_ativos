@@ -53,8 +53,9 @@ grandeza_selecionada = st.selectbox(
 dados_grandeza = config_grandezas[grandeza_selecionada]
 
 # Estrutura o DataFrame combinando os horários reais com a grandeza escolhida
+# Estrutura o DataFrame combinando os horários reais com a grandeza escolhida
 dados_sensores = pd.DataFrame({
-    'Tempo': pd.date_range(start='2026-06-29 08:00', periods=10, freq='min'),
+    'Tempo': pd.date_range(start='2026-06-29 08:00', periods=10, freq='15min'),
     'Valor': dados_grandeza["valores"]
 })
 
