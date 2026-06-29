@@ -71,24 +71,26 @@ else:
     valores_grafico = valores_reativa
     nome_legenda = "Potência Reativa (kVAR)"
 
-# Criando o gráfico de colunas de Energia limpo
-fig_colunas_energia = go.Figure()
+# Criando o gráfico de ÁREA de Energia (Substituindo as colunas antigas)
+fig_area_energia = go.Figure()
 
-fig_colunas_energia.add_trace(go.Bar(
+fig_area_energia.add_trace(go.Scatter(
     x=datas_simuladas[-pontos:], 
     y=valores_grafico,
     name=nome_legenda,
-    marker_color="#FF4B4B"
+    mode='lines',                     # Define que é um gráfico de linha básico
+    fill='tozeroy',                    # Preenche do ponto da linha até o eixo zero (Gráfico de Área)
+    line=dict(color="#FF4B4B", width=2), # Borda superior laranja
+    fillcolor="rgba(255, 75, 75, 0.4)" # Laranja translúcido idêntico ao modelo sugerido
 ))
 
-# Layout limpo sem updatemenus (botões redundantes removidos)
-fig_colunas_energia.update_layout(
+fig_area_energia.update_layout(
     margin=dict(l=20, r=20, t=10, b=10),
     hovermode="x unified",
     legend=dict(orientation="h", yanchor="bottom", y=1.02, xanchor="left", x=0),
     height=320
 )
-st.plotly_chart(fig_colunas_energia, use_container_width=True)
+st.plotly_chart(fig_area_energia, use_container_width=True)
 
 
 # ==============================================================================
@@ -118,7 +120,7 @@ with col_agua_data2:
 
 st.write("**Consumo Integrado (15 min):**")
 
-# Gráfico de Água estritamente crescente
+# Gráfico de Água estritamente crescente mantido em barras azuis
 consumos_pulso_agua = np.random.uniform(0.1, 0.5, pontos)
 valores_crescentes_agua = np.cumsum(consumos_pulso_agua) + 20.0
 
