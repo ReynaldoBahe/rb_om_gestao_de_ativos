@@ -1,5 +1,8 @@
 import streamlit as st
 import datetime
+import pandas as pd
+import numpy as np
+import plotly.graph_objects as go
 
 # Garanta que a página esteja configurada como "wide" no início do arquivo
 # st.set_page_config(layout="wide")
@@ -31,8 +34,27 @@ with col_eng_card:
     st.metric(label="Consumo Acumulado no Período", value=f"{consumo_acumulado_eng:,} kWh".replace(",", "."))
 
 st.write("**Consumo Integrado (15 min):**")
-# O seu gráfico de barras LARANJA (kWh) entra aqui ocupando a largura inteira abaixo do cartão
-# Exemplo: st.bar_chart(dados_energia_filtrados, color="#FF4B4B")
+
+# --- [NOVO] GRÁFICO DE COLUNAS COM AS GRANDEZAS DE ENERGIA ---
+# (Simulação dos dados de 15 em 15 minutos - Substitua pelas suas variáveis reais)
+datas_energia = pd.date_range(start="2026-06-22", end="2026-06-29", freq="15min")
+fig_colunas_energia = go.Figure()
+
+# Adiciona as colunas (barras) para as grandezas elétricas
+fig_colunas_energia.add_trace(go.Bar(
+    x=datas_energia[-48:], # Exibe as últimas 12 horas para fins visuais
+    y=np.random.uniform(45, 60, 48),
+    name="Potência Ativa (kW)",
+    marker_color="#FF4B4B" # Laranja padrão do seu layout de energia
+))
+
+fig_colunas_energia.update_layout(
+    margin=dict(l=20, r=20, t=10, b=10),
+    hovermode="x unified",
+    legend=dict(orientation="h", yanchor="bottom", y=1.02, xanchor="right", x=1),
+    height=300
+)
+st.plotly_chart(fig_colunas_energia, use_container_width=True)
 
 
 # ==============================================================================
