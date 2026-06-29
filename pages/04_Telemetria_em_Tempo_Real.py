@@ -30,19 +30,15 @@ st.subheader("Parâmetros Elétricos (Potência, Corrente, Fator de Potência)")
 
 st.markdown("---")
 
-# Filtros e Cartão de Consumo Acumulado de Energia
+# Filtros de Energia (Divididos de forma limpa e simétrica sem o cartão)
 st.subheader("Consumo de Energia por Período")
-col_eng_data1, col_eng_data2, col_eng_card = st.columns(3)
+col_eng_data1, col_eng_data2 = st.columns(2)
 
 with col_eng_data1:
     data_ini_eng = st.date_input("Data Inicial (Energia)", datetime.date(2026, 6, 22), key="ini_eng")
 
 with col_eng_data2:
     data_fim_eng = st.date_input("Data Final (Energia)", datetime.date(2026, 6, 29), key="fim_eng")
-
-with col_eng_card:
-    consumo_acumulado_eng = 1452.8 
-    st.metric(label="Consumo Acumulado no Período", value=f"{consumo_acumulado_eng:,} kWh".replace(",", "."))
 
 st.write("**Consumo Integrado (15 min):**")
 
@@ -141,9 +137,9 @@ st.subheader("Vazão e Parâmetros Hidráulicos")
 
 st.markdown("---")
 
-# Filtros e Cartão de Consumo Acumulado de Água
+# Filtros de Água (Divididos de forma limpa e simétrica sem o cartão)
 st.subheader("Consumo de Água por Período")
-col_agua_data1, col_agua_data2, col_agua_card = st.columns(3)
+col_agua_data1, col_agua_data2 = st.columns(2)
 
 with col_agua_data1:
     data_ini_agua = st.date_input("Data Inicial (Água)", datetime.date(2026, 6, 22), key="ini_agua")
@@ -151,21 +147,16 @@ with col_agua_data1:
 with col_agua_data2:
     data_fim_agua = st.date_input("Data Final (Água)", datetime.date(2026, 6, 29), key="fim_agua")
 
-with col_agua_card:
-    consumo_acumulado_agua = 34.5 
-    st.metric(label="Consumo Acumulado no Período", value=f"{consumo_acumulado_agua:,} m³".replace(",", "."))
-
 st.write("**Consumo Integrado (15 min):**")
 
-# --- CORREÇÃO AQUI: GERANDO UM GRÁFICO DE ÁGUA APENAS CRESCENTE ---
-# Geramos pequenos consumos e usamos o cumsum para acumulá-los de forma crescente
+# Gráfico de Água estritamente crescente
 consumos_pulso_agua = np.random.uniform(0.1, 0.5, pontos)
-valores_crescentes_agua = np.cumsum(consumos_pulso_agua) + 20.0 # Começa a partir de uma base arbitrária de 20 m³
+valores_crescentes_agua = np.cumsum(consumos_pulso_agua) + 20.0
 
 fig_colunas_agua = go.Figure()
 fig_colunas_agua.add_trace(go.Bar(
     x=datas_simuladas[-pontos:], 
-    y=valores_crescentes_agua, # Dados estritamente crescentes
+    y=valores_crescentes_agua, 
     name="Volume Acumulado (m³)",
     marker_color="#00a3e0"
 ))
