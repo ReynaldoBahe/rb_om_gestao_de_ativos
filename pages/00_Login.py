@@ -12,7 +12,7 @@ if "cliente_ativo" not in st.session_state:
 col_central, _ = st.columns([2, 1]) # Mantém alinhado à esquerda como no seu print
 
 with col_central:
-    st.markdown("# 🔑 Acesso ao Sistema")
+    st.title("Acesso ao Sistema")
     st.write("Insira suas credenciais para acessar o painel de engenharia e O&M.")
     
     # Caixa visual do formulário
