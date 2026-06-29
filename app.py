@@ -29,8 +29,9 @@ else:
     # Se estiver logado com sucesso, monta o menu estruturado e libera os arquivos técnicos
     pg = st.navigation({
         "Menu Principal": [home_page],
-        "Módulos Operacionais": [eng_page, manut_page, tempo_page]
+                "Módulos Operacionais": [eng_page, manut_page, tempo_page, telemetria_page]
     })
+
 
 # Executa o sistema de rotas do Streamlit
 pg.run()
