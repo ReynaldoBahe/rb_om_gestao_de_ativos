@@ -1,26 +1,28 @@
 import streamlit as st
 
 # =========================================================================
-# # TRAVA DE SEGURANÇA INTEGRADA
+# 🔒 TRAVA DE SEGURANÇA (Primeira linha obrigatória do arquivo)
 # =========================================================================
 if "logged_in" not in st.session_state or not st.session_state.logged_in:
     st.error("🔒 Acesso negado. Por favor, faça o login na página inicial.")
     st.stop()
 
+# Se passou da trava, o sistema descobre quem é o cliente logado
 nome_cliente = st.session_state.get("cliente_ativo", "Cliente")
 
-# Cabeçalho Principal
+# =========================================================================
+# 🏛️ INTERFACE VISUAL DA HOME (O "Cartão de Visitas" do seu Portal)
+# =========================================================================
 st.markdown(f'<h1 style="color: #1E3A8A;">🏗️ Portal de Engenharia & Gestão de Ativos</h1>', unsafe_allow_html=True)
 st.markdown(f"### Bem-vindo ao centro operacional de O&M, **{nome_cliente}**!")
 st.write("Esta plataforma centraliza o controle de manutenção, monitoramento energético e indicadores de performance.")
 
 st.markdown("---")
 
-# Seção de Módulos (Apresentação Prática)
 st.subheader("📁 Conheça os Módulos Operacionais")
 st.write("Utilize o menu lateral esquerdo para navegar pelas ferramentas disponíveis:")
 
-# Organização em 2 Colunas para os principais pilares
+# Divisão em duas colunas organizadas
 col_esq, col_dir = st.columns(2)
 
 with col_esq:
