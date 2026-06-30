@@ -1,7 +1,9 @@
 import streamlit as st
 
 # 1. Configuração da página (Deve ser mantida como centered para o card flutuar)
-st.set_page_config(page_title="RB Consultoria", page_icon="🏢", layout="centered")
+# Mude de "centered" para "wide" no seu arquivo raiz
+st.set_page_config(page_title="RB Consultoria", page_icon="🏢", layout="wide")
+
 
 # 2. Inicializa as variáveis de controle de login globais
 if "logged_in" not in st.session_state:
