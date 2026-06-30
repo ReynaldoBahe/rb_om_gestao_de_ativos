@@ -37,36 +37,35 @@ pg = st.navigation(paginas_disponiveis)
 # =========================================================================
 if not st.session_state.logged_in:
     
-    # Título centralizado sem emojis problemáticos
-    st.markdown("<h2 style='text-align: center;'>Acesso ao Sistema</h2>", unsafe_allow_html=True)
-    st.markdown("<p style='text-align: center; color: gray;'>Insira suas credenciais para acessar o painel de engenharia e O&M.</p>", unsafe_allow_html=True)
+    # Criamos duas colunas de tamanhos iguais (1 para logo, 1 para formulário)
+    col_logo, col_login = st.columns(2, gap="large")
     
-    # Formulário estruturado e seguro em caixa
-    with st.form("formulario_login"):
-        usuario = st.text_input("Usuário", placeholder="Digite seu usuário")
-        senha = st.text_input("Senha", type="password", placeholder="Digite sua senha")
-        lembrar = st.checkbox("Lembrar de mim")
+    # -----------------------------------------------------------------
+    # COLUNA DA ESQUERDA: Logomarca e Boas-Vindas
+    # -----------------------------------------------------------------
+    with col_logo:
+        st.markdown("<br><br>", unsafe_allow_html=True) # Espaçamento para alinhar verticalmente
+        # Substitua a URL abaixo pelo link real da imagem da sua logomarca
+        st.image("https://placeholder.com", use_container_width=True)
+        st.markdown("""
+            <div style='text-align: center; margin-top: 20px;'>
+                <h3>Gestão Estratégica de Ativos</h3>
+                <p style='color: gray;'>Painel integrado de Engenharia, Manutenção e Telemetria Operacional.</p>
+            </div>
+        """, unsafe_allow_html=True)
         
-        # Botão de submissão do formulário
-        botao_entrar = st.form_submit_button("Entrar", use_container_width=True)
-
-    # Processamento do clique no botão
-    if botao_entrar:
-        # Banco de dados temporário para validação
-        usuarios_validos = {
-            "admin": "admin",
-            "fiat": "fiat123",
-            "ambev": "ambev123"
-        }
+    # -----------------------------------------------------------------
+    # COLUNA DA DIREITA: Formulário de Acesso
+    # -----------------------------------------------------------------
+    with col_login:
+        st.markdown("<h2 style='text-align: center;'>Acesso ao Sistema</h2>", unsafe_allow_html=True)
+        st.markdown("<p style='text-align: center; color: gray;'>Insira suas credenciais para acessar.</p>", unsafe_allow_html=True)
         
-        if usuario in usuarios_validos and senha == usuarios_validos[usuario]:
-            # Ativa a ponte de segurança global na sessão
-            st.session_state.logged_in = True
-            st.session_state.cliente_ativo = usuario.upper()
-            st.rerun() # Recarrega a página para aplicar o acesso liberado
-        else:
-            st.error("❌ Usuário ou senha incorretos. Verifique suas credenciais.")
-
-else:
-    # Caso o usuário já esteja autenticado, executa a página selecionada no menu lateral
-    pg.run()
+        # Formulário estruturado e seguro em caixa
+        with st.form("formulario_login"):
+            usuario = st.text_input("Usuário", placeholder="Digite seu usuário")
+            senha = st.text_input("Senha", type="password", placeholder="Digite sua senha")
+            lembrar = st.checkbox("Lembrar de mim")
+            
+            # Botão de submissão do formulário
+            botao_entrar = st.form_submit_button("Entrar", use_container_width=True)
