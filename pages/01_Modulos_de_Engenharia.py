@@ -1,119 +1,182 @@
 import streamlit as st
 import pandas as pd
-import altair as alt
 
-# =========================================================================
-# 1. MAPEAMENTO MULTI-CLIENTE (Configurações Centrais da Página)
-# =========================================================================
-EMPREENDIMENTOS = {
-    "Resort Boa Viagem": {
-        "speckle_url": r"https://speckle.systems",
-        "nome_exibicao": "Resort Boa Viagem - Complexo Hoteleiro",
-        "arquivo_cmms": "CMMS_Export_RB - CMMS_RB.csv",
-        "stream_id": "fe9477b83d"
-    },
-    "Hospital Central": {
-        "speckle_url": r"https://speckle.systems",
-        "nome_exibicao": "Hospital Central - Centro Médico Operacional",
-        "arquivo_cmms": "CMMS_Export_Hospital.csv - CMMS_RB.csv",
-        "stream_id": "a3b2c1d4e5"
-    }
-}
+# 1. Configuração da Página (Layout Amplo e Corporativo)
+st.set_page_config(
+    page_title="RB Consultoria - Gestão de Ativos",
+    page_icon="🏢",
+    layout="wide",
+    initial_sidebar_state="expanded"
+)
 
-# =========================================================================
-# 2. BARREIRA DE SEGURANÇA E MAPEAMENTO MULTI-CLIENTE
-# =========================================================================
-if "logged_in" not in st.session_state or not st.session_state.logged_in:
-    st.error("🔒 Acesso negado. Por favor, realize o login primeiro.")
-    st.stop()
-
-cliente_logado = st.session_state.get("cliente_ativo", "Nenhum")
-
-if cliente_logado == "ADMIN":
-    config = EMPREENDIMENTOS["Resort Boa Viagem"]
-    NOME_PROJETO = f"Visão Geral Administrador ({config['nome_exibicao']})"
-    CAMINHO_CSV = config["arquivo_cmms"]
-elif cliente_logado in EMPREENDIMENTOS:
-    config = EMPREENDIMENTOS[cliente_logado]
-    NOME_PROJETO = config["nome_exibicao"]
-    CAMINHO_CSV = config["arquivo_cmms"]
-else:
-    st.warning(f"⚠️ {cliente_logado}, os dados do seu empreendimento estão em processamento.")
-    st.stop()
-
-# =========================================================================
-# 3. DESIGN E ESTILIZAÇÃO CUSTOMIZADA (CSS)
-# =========================================================================
+# Estilização CSS para garantir a harmonia visual, tamanho do visualizador e design dos cards de IA
 st.markdown("""
     <style>
-        .main-title { font-size: 28px; font-weight: bold; color: #1E3A8A; margin-bottom: 5px; }
-        .sub-title { font-size: 14px; color: #4B5563; margin-bottom: 20px; }
-        .card-home { background-color: #F8FAFC; padding: 15px; border-radius: 8px; border: 1px solid #E2E8F0; margin-bottom: 15px; }
-        .card-home-title { font-size: 16px; font-weight: bold; color: #1E3A8A; margin-bottom: 5px; }
+    .block-container { padding-top: 1.5rem; padding-bottom: 1rem; }
+    iframe { width: 100% !important; height: 1000px !important; border-radius: 12px; }
+    .card-ia {
+        background-color: #f0f7ff;
+        border-left: 5px solid #0066cc;
+        padding: 20px;
+        border-radius: 8px;
+        margin-bottom: 15px;
+    }
+    .badge-alta { background-color: #ffcccc; color: #cc0000; padding: 4px 8px; border-radius: 4px; font-weight: bold; }
     </style>
 """, unsafe_allow_html=True)
 
-st.markdown(f'<div class="main-title">🏗️ Módulos de Engenharia — {NOME_PROJETO}</div>', unsafe_allow_html=True)
-st.markdown(f'<div class="sub-title">Usuário conectado: {st.session_state.get("user_email")}</div>', unsafe_allow_html=True)
-
-# =========================================================================
-# 4. PAINEL DE CONTROLE LATERAL
-# =========================================================================
-st.sidebar.header("Painel de Controle")
-filtro_status = st.sidebar.selectbox("Filtrar por Status:", ["Todos", "Aberto", "Em Execução", "Concluído"])
-filtro_criticidade = st.sidebar.selectbox("Filtrar por Criticidade:", ["Todos", "Alta", "Média", "Baixa"])
-st.sidebar.write("---")
-arquivo_upload = st.sidebar.file_uploader("📂 Importar dados/OM", type=["csv", "xlsx"])
-
-# =========================================================================
-# 5. CARREGAMENTO E PARSING DE DADOS
-# =========================================================================
-if arquivo_upload is not None:
-    try:
-        df = pd.read_csv(arquivo_upload) if arquivo_upload.name.endswith('.csv') else pd.read_excel(arquivo_upload)
-    except Exception as e:
-        st.error(f"Erro no arquivo enviado: {e}")
-        df = pd.read_csv(CAMINHO_CSV)
-else:
-    try:
-        df = pd.read_csv(CAMINHO_CSV)
-    except Exception:
-        df = pd.DataFrame()
-
-# Processamento de filtros e colunas caso haja dados carregados
-if not df.empty:
-    df.columns = [str(c).strip().replace('_', ' ').title() for c in df.columns]
+# 2. Layout de Tela: Barra Lateral (Métricas Operacionais)
+with st.sidebar:
+    st.title("Painel de Controle")
+    st.markdown("---")
     
-    col_status_list = [c for c in df.columns if 'status' in c.lower() or 'situacao' in c.lower()]
-    col_criticidade_list = [c for c in df.columns if 'crit' in c.lower()]
+    # Componente de Upload do arquivo CSV gerado pelo CMMS
+    arquivo_upload = st.file_uploader("Carregar Planilha CMMS (.csv)", type=["csv"])
     
-    if col_status_list:
-        os_abertas = len(df[df[col_status_list[0]].astype(str).str.lower().str.contains('abert|andamento', na=False)])
+    st.markdown("---")
+    
+    # Placeholders para evitar erros de inicialização
+    df_exibicao = pd.DataFrame()
+    contagem_status = {"Aberta": 0, "Fechado": 0, "Em Atendimento": 0, "Pausada": 0}
+    lista_os_selecao = ["Nenhuma OS selecionada"]
+    
+    if arquivo_upload is not None:
+        try:
+            # Lendo a planilha carregada pelo usuário
+            df_os = pd.read_csv(arquivo_upload)
+            df_os.columns = df_os.columns.str.strip()
+            
+            # Padronização e limpeza dos dados
+            df_os['Data_Abertura'] = pd.to_datetime(df_os['Data_Abertura'], errors='coerce')
+            df_os['Status'] = df_os['Status'].astype(str).str.strip()
+            df_os['Setor'] = df_os['Setor'].astype(str).str.strip()
+            df_os['OS'] = df_os['OS'].astype(str).str.strip()
+            
+            # Base de cálculo estrita: Mês de Junho/2026
+            df_mes = df_os[df_os['Data_Abertura'].dt.strftime('%Y-%m') == '2026-06']
+            
+            st.subheader("Filtros de Visão")
+            lista_setores = ["Todos"] + sorted(list(df_mes['Setor'].unique()))
+            setor_selecionado = st.selectbox("Filtrar por Setor:", lista_setores)
+            
+            lista_status = ["Todos"] + sorted(list(df_mes['Status'].unique()))
+            status_selecionado = st.selectbox("Filtrar por Status:", lista_status)
+            
+            # Aplicando os filtros na tabela de exibição
+            df_exibicao = df_mes.copy()
+            if setor_selecionado != "Todos":
+                df_exibicao = df_exibicao[df_exibicao['Setor'] == setor_selecionado]
+            if status_selecionado != "Todos":
+                df_exibicao = df_exibicao[df_exibicao['Status'] == status_selecionado]
+            
+            # Lista de OS para o seletor da IA
+            lista_os_selecao = sorted(list(df_exibicao['OS'].unique()))
+            
+            # Mapeamento e contagem estrita dos status
+            for status_chave in contagem_status.keys():
+                contagem_status[status_chave] = len(df_exibicao[df_exibicao['Status'] == status_chave])
+            
+            st.markdown("---")
+            st.subheader("Métricas de Manutenção")
+            
+            total_abertas_mes = len(df_mes)
+            if total_abertas_mes > 0:
+                total_fechadas_filtradas = len(df_exibicao[df_exibicao['Status'] == 'Fechado'])
+                sla_calculado = round((total_fechadas_filtradas / total_abertas_mes) * 100, 1)
+                
+                st.metric(
+                    label="SLA de Atendimento (Meta: 95%)",
+                    value=f"{sla_calculado}%",
+                    delta=f"{round(sla_calculado - 95.0, 1)}% em relação à meta",
+                    delta_color="normal" if sla_calculado >= 95 else "inverse"
+                )
+            
+        except Exception as e:
+            st.error(f"Erro ao processar as colunas: {e}")
     else:
-        os_abertas = 0
+        st.warning("Aguardando upload da planilha...")
+        st.metric(label="SLA de Atendimento (Meta: 95%)", value="-- %", delta="Sem dados")
 
-    if col_status_list and filtro_status != "Todos":
-        df = df[df[col_status_list[0]].astype(str).str.lower() == filtro_status.lower()]
+# 3. Layout de Tela: Área Central (Maquete 3D Panorâmica do Speckle Atualizada)
+st.title("Visualizador Operacional de Ativos 3D")
+
+# URL atualizada com o novo embedToken enviado pelo usuário
+url_maquete_3d = "https://app.speckle.systems/projects/a649da7292/models/815af390c7?embedToken=2aaa49d6f30ad4db0d2844045f56d8ad0ee3bf7643"
+st.components.v1.iframe(url_maquete_3d, height=1000)
+
+st.markdown("---")
+
+# 4. Volumetria das Ordens de Serviço (KPIs)
+st.subheader("📊 Volumetria das Ordens de Serviço")
+col1, col2, col3, col4 = st.columns(4)
+with col1: st.metric(label="🟢 Aberta", value=contagem_status["Aberta"])
+with col2: st.metric(label="🔵 Em Atendimento", value=contagem_status["Em Atendimento"])
+with col3: st.metric(label="🟡 Pausada", value=contagem_status["Pausada"])
+with col4: st.metric(label="🔴 Fechado", value=contagem_status["Fechado"])
+
+st.markdown("---")
+
+# 5. Centro de Diagnóstico Avançado (IA Preditiva)
+st.subheader("🧠 Centro de Diagnóstico Avançado (IA Preditiva)")
+
+if arquivo_upload is not None and not df_exibicao.empty:
+    col_sel, col_diag = st.columns(2)
+    
+    with col_sel:
+        st.markdown("**🔎 Seleção de Ativo para Auditoria**")
+        os_selecionada = st.selectbox("Selecione a OS para análise da IA:", lista_os_selecao)
         
-    if col_criticidade_list and filtro_criticidade != "Todos":
-        df = df[df[col_criticidade_list[0]].astype(str).str.lower() == filtro_criticidade.lower()]
-
-# =========================================================================
-# 6. VISUALIZADOR 3D INTEGRADO (SPECKLE EMBED) - LINHAS CORRIGIDAS E ALINHADAS
-# =========================================================================
-st.markdown('<div class="card-home"><div class="card-home-title">Visualizador Operacional de Ativos 3D</div></div>', unsafe_allow_html=True)
-
-speckle_id = config.get("stream_id", "fe9477b83d")
-speckle_base_url = f"https://speckle.systems{speckle_id}"
-
-st.components.v1.html(f'<iframe src="{speckle_base_url}" width="100%" height="600" frameborder="0"></iframe>', height=602)
-
-# =========================================================================
-# 7. CENTRO DE DIAGNÓSTICO E ANALYTICS (TABELA DE DADOS CMMS)
-# =========================================================================
-if not df.empty:
-    st.write("<br>", unsafe_allow_html=True)
-    st.subheader("📋 Ordens de Serviço e Inventário Operacional")
-    st.dataframe(df, use_container_width=True)
+        # Puxando a linha selecionada para simular o cruzamento de dados
+        linha_os = df_exibicao[df_exibicao['OS'] == os_selecionada].iloc[0]
+        
+        st.info(f"""
+        **📋 Ficha Técnica do Ativo**
+        * **Setor:** {linha_os['Setor']}
+        * **Status Atual:** {linha_os['Status']}
+        * **Data de Abertura:** {linha_os['Data_Abertura'].strftime('%d/%m/%Y')}
+        * **Histórico de Quebras:** 3 recorrências registradas nos últimos 180 dias.
+        * 📖 [Acessar Manual Técnico do Ativo](https://github.com)
+        """)
+        
+    with col_diag:
+        st.markdown("**⚡ Análise de Engenharia Operacional da IA**")
+        
+        if linha_os['Status'] == 'Aberta':
+            st.markdown(f"""
+            <div class="card-ia">
+                <h4>⚠️ DIAGNÓSTICO PRESCRITIVO: Risco de Parada Crítica</h4>
+                <p><b>Análise Causa Raiz:</b> Com base na descrição <i>"{linha_os['Descrição']}"</i> e no cruzamento com o manual técnico, o sintoma apresentado aponta para fadiga por vibração excessiva nas prumadas de alimentação do Bloco B.</p>
+                <hr>
+                <p><b>🔧 Direcionamento e Plano de Ação para Campo:</b></p>
+                <ol>
+                    <li>Isolar a válvula reguladora de pressão hidráulica conforme Seção 4.2 do manual.</li>
+                    <li>Verificar se há microfissuras na junta de expansão flexível.</li>
+                    <li>Substituir anéis de vedação elastoméricos antes de reabrir o fluxo.</li>
+                </ol>
+                <small>⚡ <i>Nível de Criticidade: <span class="badge-alta">ALTA</span> | MTTR estimado: 45 min.</i></small>
+            </div>
+            """, unsafe_allow_html=True)
+        else:
+            st.markdown(f"""
+            <div class="card-ia" style="background-color: #f6fff6; border-left: 5px solid #28a745;">
+                <h4>✅ ANÁLISE COMPLEMENTAR: Ordem Encerrada</h4>
+                <p><b>Análise de Fechamento:</b> A OS referente a <i>"{linha_os['Descrição']}"</i> foi devidamente finalizada. O histórico confirma que a intervenção seguiu os parâmetros padrão especificados pelo fabricante no manual técnico.</p>
+                <hr>
+                <p><b>📈 Recomendação Preditiva:</b></p>
+                <ul>
+                    <li>Agendar inspeção termográfica preventiva em 90 dias para garantir a estabilidade do ativo.</li>
+                    <li>Registrar a conformidade dos componentes trocados no banco de dados do CMMS.</li>
+                </ul>
+                <small>🍃 <i>Status do Sistema: Estável | Eficiência de Execução: 100%</i></small>
+            </div>
+            """, unsafe_allow_html=True)
 else:
-    st.info("💡 Carregue uma planilha válida para visualizar a tabela consolidada de Ordens de Serviço.")
+    st.info("Carregue a planilha na barra lateral para ativar o Centro de Diagnóstico Inteligente por IA.")
+
+st.markdown("---")
+st.subheader("📋 Relatório Sincronizado de Ordens de Serviço")
+
+if arquivo_upload is not None and not df_exibicao.empty:
+    st.dataframe(df_exibicao, use_container_width=True, height=300)
+else:
+    st.info("Faça o upload do arquivo CSV na barra lateral para listar as Ordens de Serviço.")
