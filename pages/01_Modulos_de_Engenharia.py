@@ -1,19 +1,25 @@
 import streamlit as st
 import pandas as pd
-import altair as alt
 
-# =========================================================================
-# 1. BARREIRA DE SEGURANÇA E MAPEAMENTO MULTI-CLIENTE
-# =========================================================================
-if "logged_in" not in st.session_state or not st.session_state.logged_in:
-    st.error("🔒 Acesso negado. Por favor, realize o login primeiro.")
-    st.stop()
+# 1. VOCÊ PRECISA REPETIR O DICIONÁRIO AQUI PARA A PÁGINA RECONHECÊ-LO:
+EMPREENDIMENTOS = {
+    "Resort Boa Viagem": {
+        "speckle_url": r"https://speckle.systems",
+        "nome_exibicao": "Resort Boa Viagem - Complexo Hoteleiro",
+        "arquivo_cmms": "CMMS_Export_RB - CMMS_RB.csv"
+    },
+    "Hospital Central": {
+        "speckle_url": r"https://speckle.systems",
+        "nome_exibicao": "Hospital Central - Centro Médico Operacional",
+        "arquivo_cmms": "CMMS_Export_Hospital.csv - CMMS_RB.csv"
+    }
+}
 
+# 2. AGORA A SUA VALIDAÇÃO VAI FUNCIONAR SEM ERROS:
 cliente_logado = st.session_state.get("cliente_ativo", "Nenhum")
 
-# Caso o usuário seja o administrador do sistema
 if cliente_logado == "ADMIN":
-    config = EMPREENDIMENTOS["Resort Boa Viagem"] # Ou o projeto padrão que preferir
+    config = EMPREENDIMENTOS["Resort Boa Viagem"]
     NOME_PROJETO = config["nome_exibicao"]
     CAMINHO_CSV = config["arquivo_cmms"]
 
@@ -21,9 +27,11 @@ elif cliente_logado in EMPREENDIMENTOS:
     config = EMPREENDIMENTOS[cliente_logado]
     NOME_PROJETO = config["nome_exibicao"]
     CAMINHO_CSV = config["arquivo_cmms"]
+    
 else:
     st.warning(f"⚠️ {cliente_logado}, os dados do seu empreendimento estão em processamento.")
     st.stop()
+
 
 
 # =========================================================================
