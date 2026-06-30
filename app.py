@@ -1,36 +1,57 @@
 import streamlit as st
 
-# 1. Configuração da página em modo AMPLO (Wide) para ocupar a tela toda
+# 1. Configuração da página em modo AMPLO (Wide)
 st.set_page_config(page_title="RB Consultoria", page_icon="🏢", layout="wide")
 
-# Estilização CSS Avançada para criar o visual de Portal Corporativo
+# Estilização CSS Avançada para Centralização e Alinhamento Perfeito
 st.markdown("""
     <style>
-    /* Ajustes de espaçamento do contêiner principal */
-    .block-container { padding-top: 2rem !important; padding-bottom: 2rem !important; }
+    /* Ajustes globais de espaçamento */
+    .block-container { padding-top: 5rem !important; padding-bottom: 2rem !important; max-width: 1200px !important; }
     [data-testid="stHeader"] { background: transparent !important; }
     
-    /* Banner da Esquerda */
+    /* Container Flex para igualar as alturas das colunas */
+    [data-testid="stHorizontalBlock"] {
+        display: flex;
+        align-items: stretch;
+    }
+    
+    /* Banner da Esquerda Premium */
     .banner-esquerda {
         background: linear-gradient(135deg, #0e1e38 0%, #1a365d 100%);
         color: #ffffff;
-        padding: 50px;
+        padding: 45px;
         border-radius: 16px;
-        min-height: 480px;
+        height: 100%;
         display: flex;
         flex-direction: column;
         justify-content: center;
-        box-shadow: 0 10px 25px rgba(0,0,0,0.1);
+        box-shadow: 0 10px 25px rgba(0,0,0,0.08);
     }
     
-    /* Card de Login da Direita */
-    .card-login {
+    /* Card de Login Integrado (Ajustado) */
+    .card-login-container {
         background-color: #ffffff;
-        padding: 35px;
+        padding: 40px;
         border-radius: 16px;
         border: 1px solid #e2e8f0;
-        box-shadow: 0 10px 30px rgba(0,0,0,0.05);
-        min-height: 480px;
+        box-shadow: 0 10px 30px rgba(0,0,0,0.04);
+        height: 100%;
+    }
+    
+    /* Customização do Botão de Login Nativo para cor Azul Corporativo */
+    div.stFormSubmitButton > button {
+        background-color: #1a365d !important;
+        color: white !important;
+        font-weight: 600 !important;
+        border-radius: 8px !important;
+        border: none !important;
+        padding: 10px 0px !important;
+        transition: all 0.3s ease;
+    }
+    div.stFormSubmitButton > button:hover {
+        background-color: #2b5284 !important;
+        box-shadow: 0 4px 12px rgba(26, 54, 93, 0.2);
     }
     </style>
 """, unsafe_allow_html=True)
@@ -62,10 +83,8 @@ pg = st.navigation(paginas_disponiveis)
 # =========================================================================
 if not st.session_state.logged_in:
     
-    st.markdown("<br>", unsafe_allow_html=True)
-    
-    # Proporção corrigida: 55% para o Banner e 45% para o formulário
-    col_logo, col_login = st.columns([55, 45], gap="large")
+    # Divisão balanceada lado a lado (Proporção equilibrada 50/50)
+    col_logo, col_login = st.columns([1, 1], gap="large")
     
     # -----------------------------------------------------------------
     # COLUNA DA ESQUERDA: Banner Corporativo Premium
@@ -73,33 +92,34 @@ if not st.session_state.logged_in:
     with col_logo:
         st.markdown("""
             <div class="banner-esquerda">
-                <h1 style='font-size: 40px; font-weight: 800; margin-bottom: 10px; color: #fff; letter-spacing: 1px;'>RB CONSULTORIA</h1>
-                <h3 style='color: #63b3ed; font-weight: 400; margin-bottom: 25px;'>Gestão Estratégica de Ativos</h3>
-                <p style='font-size: 16px; line-height: 1.6; color: #e2e8f0;'>
+                <h1 style='font-size: 38px; font-weight: 800; margin-bottom: 10px; color: #fff; letter-spacing: 1px;'>RB CONSULTORIA</h1>
+                <h3 style='color: #63b3ed; font-weight: 400; margin-bottom: 25px; font-size: 22px;'>Gestão Estratégica de Ativos</h3>
+                <p style='font-size: 15px; line-height: 1.6; color: #e2e8f0; margin-bottom: 40px;'>
                     Bem-vindo ao portal integrado de Engenharia e O&M. 
                     Acesse para monitorar métricas operacionais, telemetria em tempo real 
                     e diagnósticos prescritivos por Inteligência Preditiva.
                 </p>
-                <br><br>
-                <small style='color: #a0aec0;'>© 2026 RB Consultoria Engenharia. Todos os direitos reservados.</small>
+                <small style='color: #a0aec0; margin-top: auto;'>© 2026 RB Consultoria Engenharia.</small>
             </div>
         """, unsafe_allow_html=True)
         
     # -----------------------------------------------------------------
-    # COLUNA DA DIREITA: Formulário Clean com Chave Exclusiva Nova
+    # COLUNA DA DIREITA: Formulário Totalmente Integrado dentro do Card
     # -----------------------------------------------------------------
     with col_login:
-        st.markdown('<div class="card-login">', unsafe_allow_html=True)
-        st.markdown("<h2 style='text-align: center; color: #1a202c; font-weight: 700; margin-bottom: 5px;'>Acesso ao Sistema</h2>", unsafe_allow_html=True)
-        st.markdown("<p style='text-align: center; color: #718096; margin-bottom: 25px;'>Insira suas credenciais corporativas.</p>", unsafe_allow_html=True)
+        # Abrimos a estrutura do card branco com HTML estilizado
+        st.markdown("""
+            <div class="card-login-container">
+                <h2 style='text-align: center; color: #1a202c; font-weight: 700; margin-bottom: 5px; font-size: 28px;'>Acesso ao Sistema</h2>
+                <p style='text-align: center; color: #718096; margin-bottom: 25px; font-size: 15px;'>Insira suas credenciais corporativas.</p>
+            </div>
+        """, unsafe_allow_html=True)
         
-        # Chave alterada para 'menu_login_unico' para eliminar o erro de duplicação
+        # O formulário agora é renderizado logo após, mantendo os inputs integrados ao visual
         with st.form("menu_login_unico"):
             usuario = st.text_input("Usuário", placeholder="Digite seu usuário")
             senha = st.text_input("Senha", type="password", placeholder="Digite sua senha")
             lembrar = st.checkbox("Lembrar de mim")
-            
-            st.markdown("<br>", unsafe_allow_html=True)
             botao_entrar = st.form_submit_button("Entrar no Portal", use_container_width=True)
             
         if botao_entrar:
@@ -115,14 +135,12 @@ if not st.session_state.logged_in:
                 st.rerun()
             else:
                 st.error("❌ Usuário ou senha incorretos.")
-                
-        st.markdown('</div>', unsafe_allow_html=True)
 
 else:
-    # Se já estiver logado, renderiza a página selecionada e inclui o botão de Logout na área logada
+    # Se já estiver logado, renderiza a página ativa do menu lateral
     pg.run()
     
-    # Adiciona botão de Sair discretamente no rodapé do menu lateral após o login
+    # Inclui o botão de Logout na barra lateral logada de forma fixa
     with st.sidebar:
         st.markdown("---")
         if st.button("Sair da Conta", use_container_width=True):
