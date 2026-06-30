@@ -8,31 +8,11 @@ st.set_page_config(
     layout="wide",
     initial_sidebar_state="expanded"
 )
+
+# 🔐 TRAVA DE SEGURANÇA
 if "autenticado" not in st.session_state or not st.session_state["autenticado"]:
-    st.error("Acesso negado")
+    st.error("Acesso negado. Por favor, faca o login na pagina inicial.")
     st.stop()
-# 1. Configuração da Página (Layout Amplo e Corporativo)
-st.set_page_config(
-    page_title="RB Consultoria - Gestão de Ativos",
-    page_icon="🏢",
-    layout="wide",
-    initial_sidebar_state="expanded"
-)
-
-# ==============================================================================
-# ⬇️ INSERIR ESTE BLOCO EXATAMENTE AQUI (ABAIXO DE SET_PAGE_CONFIG) ⬇️
-# ==============================================================================
-if "autenticado" not in st.session_state or not st.session_state["autenticado"]:
-    st.error("🔒 Acesso negado. Por favor, faça o login na página inicial.")
-    st.stop() 
-# ==============================================================================
-
-
-# Estilização CSS para garantir a harmonia visual, tamanho do visualizador...
-st.markdown("""
-    <style>
-    .block-container { padding-top: 1.5rem; padding-bottom: 1rem; }
-...
 
 # Estilização CSS para garantir a harmonia visual, tamanho do visualizador e design dos cards de IA
 st.markdown("""
@@ -126,7 +106,7 @@ with st.sidebar:
 st.title("Visualizador Operacional de Ativos 3D")
 
 # URL atualizada com o novo embedToken enviado pelo usuário
-url_maquete_3d = "https://app.speckle.systems/projects/a649da7292/models/815af390c7?embedToken=2aaa49d6f30ad4db0d2844045f56d8ad0ee3bf7643"
+url_maquete_3d = "https://speckle.systems"
 st.components.v1.iframe(url_maquete_3d, height=1000)
 
 st.markdown("---")
@@ -155,7 +135,7 @@ if arquivo_upload is not None and not df_exibicao.empty:
         linha_os = df_exibicao[df_exibicao['OS'] == os_selecionada].iloc[0]
         
         st.info(f"""
-        **📋 Ficha Técnica do Ativo**
+        **📋 Ficha Técnico do Ativo**
         * **Setor:** {linha_os['Setor']}
         * **Status Atual:** {linha_os['Status']}
         * **Data de Abertura:** {linha_os['Data_Abertura'].strftime('%d/%m/%Y')}
@@ -196,12 +176,4 @@ if arquivo_upload is not None and not df_exibicao.empty:
             </div>
             """, unsafe_allow_html=True)
 else:
-    st.info("Carregue a planilha na barra lateral para ativar o Centro de Diagnóstico Inteligente por IA.")
-
-st.markdown("---")
-st.subheader("📋 Relatório Sincronizado de Ordens de Serviço")
-
-if arquivo_upload is not None and not df_exibicao.empty:
-    st.dataframe(df_exibicao, use_container_width=True, height=300)
-else:
-    st.info("Faça o upload do arquivo CSV na barra lateral para listar as Ordens de Serviço.")
+    st.info("Aguardando carregamento de dados para diagnóstico da IA.")
