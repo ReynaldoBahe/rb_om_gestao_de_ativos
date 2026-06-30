@@ -1,4 +1,13 @@
 import streamlit as st
+
+# Se houver um st.set_page_config, mantenha-o como a primeira linha.
+# Logo em seguida, cole o bloco abaixo:
+
+# 🔐 TRAVA DE SEGURANÇA
+if "autenticado" not in st.session_state or not st.session_state["autenticado"]:
+    st.error("Acesso negado. Por favor, faca o login na pagina inicial.")
+    st.stop()
+
 import datetime
 import pandas as pd
 import numpy as np
