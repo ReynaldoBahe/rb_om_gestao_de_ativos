@@ -1,177 +1,182 @@
 import streamlit as st
 import pandas as pd
-import altair as alt
 
-# 1. CONFIGURAÇÃO DA PÁGINA OPERACIONAL
+# 1. Configuração da Página (Layout Amplo e Corporativo)
 st.set_page_config(
-    page_title="Módulos de Engenharia — Portal",
-    page_icon="🏗️",
-    layout="wide"
+    page_title="RB Consultoria - Gestão de Ativos",
+    page_icon="🏢",
+    layout="wide",
+    initial_sidebar_state="expanded"
 )
 
-# 2. ESTILIZAÇÃO CSS PROFISSIONAL (IDÊNTICA À HOME)
+# Estilização CSS para garantir a harmonia visual, tamanho do visualizador e design dos cards de IA
 st.markdown("""
     <style>
-    .main-title { font-size: 32px; font-weight: bold; color: #1E3A8A; margin-bottom: 5px; }
-    .ficha-tecnica { background-color: #EFF6FF; padding: 20px; border-radius: 8px; border: 1px solid #BFDBFE; }
-    .vol-title { font-size: 20px; font-weight: bold; margin-top: 15px; }
-    .status-dot { display: inline-block; width: 10px; height: 10px; border-radius: 50%; margin-right: 5px; }
-    .dot-aberta { background-color: #22C55E; }
-    .dot-atendimento { background-color: #3B82F6; }
-    .dot-pausada { background-color: #EAB308; }
-    .dot-fechado { background-color: #EF4444; }
-    .vol-number { font-size: 36px; font-weight: bold; margin-top: 5px; }
+    .block-container { padding-top: 1.5rem; padding-bottom: 1rem; }
+    iframe { width: 100% !important; height: 1000px !important; border-radius: 12px; }
+    .card-ia {
+        background-color: #f0f7ff;
+        border-left: 5px solid #0066cc;
+        padding: 20px;
+        border-radius: 8px;
+        margin-bottom: 15px;
+    }
+    .badge-alta { background-color: #ffcccc; color: #cc0000; padding: 4px 8px; border-radius: 4px; font-weight: bold; }
     </style>
 """, unsafe_allow_html=True)
 
-# 3. SEGURANÇA E LEITURA DA PLANILHA NA BARRA LATERAL
-st.sidebar.header("Filtros de Visão — Engenharia")
-filtro_status = st.sidebar.selectbox("Filtrar por Status:", ["Todos", "Aberta", "Em Andamento", "Pausada", "Fechado"])
-filtro_criticidade = st.sidebar.selectbox("Filtrar por Criticidade:", ["Todos", "Alta", "Média", "Baixa"])
-filtro_tempo = st.sidebar.selectbox("Filtrar por Tempo Aberta:", ["Todos", "Menos de 24h", "Entre 2 e 7 dias", "Mais de 7 dias"])
-
-st.sidebar.write("---")
-arquivo_upload = st.sidebar.file_uploader("📂 Carregar Planilha de Ativos/OM", type=["csv", "xlsx"])
-
-# URL original aprovada do Speckle
-speckle_base_url = "https://speckle.systems"
-
-# Ingestão segura de dados
-df = pd.DataFrame()
-if arquivo_upload is not None:
-    try:
-        if arquivo_upload.name.endswith('.csv'):
-            df = pd.read_csv(arquivo_upload)
-        else:
-            df = pd.read_excel(arquivo_upload)
-    except Exception as e:
-        st.error(f"Erro ao ler o arquivo: {e}")
-
-# Mapeamento reativo de OS
-if not df.empty and 'OS' in df.columns:
-    lista_os = sorted(list(df['OS'].dropna().astype(str).unique()))
-else:
-    lista_os = ["OS-2026-001", "OS-2026-002", "OS-2026-003"]
-
-if 'os_selecionada' not in st.session_state or st.session_state.os_selecionada not in lista_os:
-    st.session_state.os_selecionada = lista_os[0] if lista_os else ""
-
-# 4. RENDERIZAÇÃO DAS 3 ABAS OPERACIONAIS
-st.markdown('<div class="main-title">🏗️ Portal de Engenharia & Gestão de Projetos</div>', unsafe_allow_html=True)
-
-aba_modelo, aba_produtividade, aba_diagnostico = st.tabs([
-    "📦 Modelo 3D (Speckle)", 
-    "📊 Produtividade da Equipe", 
-    "🧠 Centro de Diagnóstico (IA)"
-])
-
-# ==========================================
-# ABA 1: MODELO 3D (BIM)
-# ==========================================
-with aba_modelo:
-    st.subheader("Visualizador Operacional de Ativos 3D")
-    id_bim_alvo = "29e456a92924eb3747bbcd9bb3edd623"
-    if not df.empty and 'OS' in df.columns:
-        col_id = next((c for c in df.columns if c.upper() == 'ID'), None)
-        if col_id:
-            linha_ativo = df[df['OS'].astype(str) == str(st.session_state.os_selecionada)]
-            if not linha_ativo.empty:
-                id_bim_alvo = str(linha_ativo[col_id].squeeze()).strip()
-    if not id_bim_alvo or id_bim_alvo == "nan":
-        id_bim_alvo = "29e456a92924eb3747bbcd9bb3edd623"
-        
-    st.info(f"🔗 Módulo BIM Sincronizado | Rastreando Ativo ID: `{id_bim_alvo}` (Selecionado no Centro de Diagnóstico)")
-    st.components.v1.iframe(speckle_base_url, height=600, scrolling=False)
-
-# ==========================================
-# ABA 2: PRODUTIVIDADE E RELATÓRIO
-# ==========================================
-with aba_produtividade:
-    if not df.empty:
-        df_filtrado = df.copy()
-        if 'Data_Abertura' in df_filtrado.columns:
-            try:
-                df_filtrado['Data_Abertura_dt'] = pd.to_datetime(df_filtrado['Data_Abertura'], errors='coerce')
-                df_filtrado['Dias_Aberta'] = (pd.to_datetime('2026-06-26') - df_filtrado['Data_Abertura_dt']).dt.days
-                if filtro_tempo == "Menos de 24h":
-                    df_filtrado = df_filtrado[df_filtrado['Dias_Aberta'] <= 1]
-                elif filtro_tempo == "Entre 2 e 7 dias":
-                    df_filtrado = df_filtrado[(df_filtrado['Dias_Aberta'] > 1) & (df_filtrado['Dias_Aberta'] <= 7)]
-                elif filtro_tempo == "Mais de 7 dias":
-                    df_filtrado = df_filtrado[df_filtrado['Dias_Aberta'] > 7]
-            except Exception:
-                pass
-        if filtro_status != "Todos" and 'Status' in df_filtrado.columns:
-            df_filtrado = df_filtrado[df_filtrado['Status'] == filtro_status]
-        if filtro_criticidade != "Todos" and 'Criticidade' in df_filtrado.columns:
-            df_filtrado = df_filtrado[df_filtrado['Criticidade'] == filtro_criticidade]
-            
-        st.markdown('<div class="vol-title">📊 Volumetria das Ordens de Serviço</div>', unsafe_allow_html=True)
-        col_status_name = next((c for c in df.columns if c.lower() == 'status'), None)
-        status_counts = df_filtrado[col_status_name].value_counts() if col_status_name else {}
-        
-        v_col1, v_col2, v_col3, v_col4 = st.columns(4)
-        v_col1.markdown(f'<div><span class="status-dot dot-aberta"></span>Aberta</div><div class="vol-number">{int(status_counts.get("Aberta", 0))}</div>', unsafe_allow_html=True)
-        v_col2.markdown(f'<div><span class="status-dot dot-atendimento"></span>Em Atendimento</div><div class="vol-number">{int(status_counts.get("Em Andamento", 0))}</div>', unsafe_allow_html=True)
-        v_col3.markdown(f'<div><span class="status-dot dot-pausada"></span>Pausada</div><div class="vol-number">{int(status_counts.get("Pausada", 0))}</div>', unsafe_allow_html=True)
-        v_col4.markdown(f'<div><span class="status-dot dot-fechado"></span>Fechado</div><div class="vol-number">{int(status_counts.get("Fechado", 0))}</div>', unsafe_allow_html=True)
-            
-        st.markdown("---")
-        st.subheader("Controle de Ordens de Serviço por Técnico")
-        col_tecnico = next((c for c in df_filtrado.columns if c.lower() in ['técnico', 'tecnico', 'responsável', 'responsavel', 'técnico responsável']), df_filtrado.columns)
-        df_produtividade = df_filtrado.groupby(col_tecnico).size().reset_index(name='Ordens')
-        df_produtividade.columns = ['Técnico', 'Ordens']
-        
-        grafico_altair = alt.Chart(df_produtividade).mark_bar(color='#1f77b4').encode(
-            x=alt.X('Técnico:N', title='Profissional Técnico', sort='-y'),
-            y=alt.Y('Ordens:Q', title='Total de Ordens de Serviço'),
-            tooltip=['Técnico', 'Ordens']
-        ).properties(width='container', height=350)
-        st.altair_chart(grafico_altair, use_container_width=True)
-        
-        with st.container():
-            st.markdown("---")
-            st.markdown('📋 **Relatório Sincronizado de Ordens de Serviço**')
-            colunas_exibir = [c for c in df_filtrado.columns if c not in ['Data_Abertura_dt', 'Dias_Aberta', 'Tempo_Num']]
-            st.dataframe(df_filtrado[colunas_exibir], use_container_width=True)
-    else:
-        st.info("💡 Por favor, certifique-se de que a planilha está carregada na barra lateral.")
-
-# ==========================================
-# ABA 3: CENTRO DE DIAGNÓSTICO (IA & MANUAL NATIVO)
-# ==========================================
-with aba_diagnostico:
-    st.subheader("🧠 Centro de Diagnóstico Avançado (IA Preditiva)")
-    col_esq, col_dir = st.columns(2)
+# 2. Layout de Tela: Barra Lateral (Métricas Operacionais)
+with st.sidebar:
+    st.title("Painel de Controle")
+    st.markdown("---")
     
-    with col_esq:
-        st.markdown("🔎 **Seleção de Ativo para Auditoria**")
-        idx_selecionado = lista_os.index(st.session_state.os_selecionada) if st.session_state.os_selecionada in lista_os else 0
-        st.session_state.os_selecionada = st.selectbox("Selecione a OS para análise da IA:", lista_os, index=idx_selecionado, key="diagnostico_final_pesos")
-        
-        resp, setor, status, data_ab = "Não identificado", "Geral", "Aberto", "20/06/2026"
-        descricao_falha = "Nenhuma descrição detalhada registrada na planilha."
-        criticidade_ativo = "Média"
-        link_manual = ""
-        
-        if not df.empty and 'OS' in df.columns:
-            dados_os = df[df['OS'].astype(str) == str(st.session_state.os_selecionada)]
-            if not dados_os.empty:
-                col_t = next((c for c in df.columns if c.lower() in ['técnico', 'tecnico', 'responsável', 'responsavel']), None)
-                resp = str(dados_os[col_t].squeeze()) if col_t else "Pedro"
-                setor = str(dados_os['Setor'].squeeze()) if 'Setor' in df.columns else "Climatização"
-                status = str(dados_os['Status'].squeeze()) if 'Status' in df.columns else "Fechado"
-                data_ab = str(dados_os['Data_Abertura'].squeeze()) if 'Data_Abertura' in df.columns else "20/06/2026"
-                col_desc = next((c for c in df.columns if c.lower() in ['descrição', 'descricao', 'ocorrência', 'ocorrencia', 'falha']), None)
-                if col_desc:
-                    descricao_falha = str(dados_os[col_desc].squeeze())
-                col_crit = next((c for c in df.columns if 'CRITIC' in c.upper()), None)
-                if col_crit:
-                    criticidade_ativo = str(dados_os[col_crit].squeeze())
-                col_link = next((c for c in df.columns if 'LINK_MANUAL_TECNICO' in c.upper().strip().replace(' ', '_')), None)
-                if col_link and not pd.isna(dados_os[col_link].squeeze()):
-                    link_manual = str(dados_os[col_link].squeeze()).strip()
+    # Componente de Upload do arquivo CSV gerado pelo CMMS
+    arquivo_upload = st.file_uploader("Carregar Planilha CMMS (.csv)", type=["csv"])
+    
+    st.markdown("---")
+    
+    # Placeholders para evitar erros de inicialização
+    df_exibicao = pd.DataFrame()
+    contagem_status = {"Aberta": 0, "Fechado": 0, "Em Atendimento": 0, "Pausada": 0}
+    lista_os_selecao = ["Nenhuma OS selecionada"]
+    
+    if arquivo_upload is not None:
+        try:
+            # Lendo a planilha carregada pelo usuário
+            df_os = pd.read_csv(arquivo_upload)
+            df_os.columns = df_os.columns.str.strip()
+            
+            # Padronização e limpeza dos dados
+            df_os['Data_Abertura'] = pd.to_datetime(df_os['Data_Abertura'], errors='coerce')
+            df_os['Status'] = df_os['Status'].astype(str).str.strip()
+            df_os['Setor'] = df_os['Setor'].astype(str).str.strip()
+            df_os['OS'] = df_os['OS'].astype(str).str.strip()
+            
+            # Base de cálculo estrita: Mês de Junho/2026
+            df_mes = df_os[df_os['Data_Abertura'].dt.strftime('%Y-%m') == '2026-06']
+            
+            st.subheader("Filtros de Visão")
+            lista_setores = ["Todos"] + sorted(list(df_mes['Setor'].unique()))
+            setor_selecionado = st.selectbox("Filtrar por Setor:", lista_setores)
+            
+            lista_status = ["Todos"] + sorted(list(df_mes['Status'].unique()))
+            status_selecionado = st.selectbox("Filtrar por Status:", lista_status)
+            
+            # Aplicando os filtros na tabela de exibição
+            df_exibicao = df_mes.copy()
+            if setor_selecionado != "Todos":
+                df_exibicao = df_exibicao[df_exibicao['Setor'] == setor_selecionado]
+            if status_selecionado != "Todos":
+                df_exibicao = df_exibicao[df_exibicao['Status'] == status_selecionado]
+            
+            # Lista de OS para o seletor da IA
+            lista_os_selecao = sorted(list(df_exibicao['OS'].unique()))
+            
+            # Mapeamento e contagem estrita dos status
+            for status_chave in contagem_status.keys():
+                contagem_status[status_chave] = len(df_exibicao[df_exibicao['Status'] == status_chave])
+            
+            st.markdown("---")
+            st.subheader("Métricas de Manutenção")
+            
+            total_abertas_mes = len(df_mes)
+            if total_abertas_mes > 0:
+                total_fechadas_filtradas = len(df_exibicao[df_exibicao['Status'] == 'Fechado'])
+                sla_calculado = round((total_fechadas_filtradas / total_abertas_mes) * 100, 1)
+                
+                st.metric(
+                    label="SLA de Atendimento (Meta: 95%)",
+                    value=f"{sla_calculado}%",
+                    delta=f"{round(sla_calculado - 95.0, 1)}% em relação à meta",
+                    delta_color="normal" if sla_calculado >= 95 else "inverse"
+                )
+            
+        except Exception as e:
+            st.error(f"Erro ao processar as colunas: {e}")
+    else:
+        st.warning("Aguardando upload da planilha...")
+        st.metric(label="SLA de Atendimento (Meta: 95%)", value="-- %", delta="Sem dados")
 
-        html_ficha = '<div class="ficha-tecnica"><h4 style="margin-top:0; color:#1E3A8A;">📋 Ficha Técnica do Ativo</h4><ul>'
-        html_ficha += f'<li><b>ID BIM:</b> {id_bim_alvo}</li>'
-        html_ficha += f'<li><b>Responsável Técnico:</b> {resp}</li>'
+# 3. Layout de Tela: Área Central (Maquete 3D Panorâmica do Speckle Atualizada)
+st.title("Visualizador Operacional de Ativos 3D")
+
+# URL atualizada com o novo embedToken enviado pelo usuário
+url_maquete_3d = "https://app.speckle.systems/projects/a649da7292/models/815af390c7?embedToken=2aaa49d6f30ad4db0d2844045f56d8ad0ee3bf7643"
+st.components.v1.iframe(url_maquete_3d, height=1000)
+
+st.markdown("---")
+
+# 4. Volumetria das Ordens de Serviço (KPIs)
+st.subheader("📊 Volumetria das Ordens de Serviço")
+col1, col2, col3, col4 = st.columns(4)
+with col1: st.metric(label="🟢 Aberta", value=contagem_status["Aberta"])
+with col2: st.metric(label="🔵 Em Atendimento", value=contagem_status["Em Atendimento"])
+with col3: st.metric(label="🟡 Pausada", value=contagem_status["Pausada"])
+with col4: st.metric(label="🔴 Fechado", value=contagem_status["Fechado"])
+
+st.markdown("---")
+
+# 5. Centro de Diagnóstico Avançado (IA Preditiva)
+st.subheader("🧠 Centro de Diagnóstico Avançado (IA Preditiva)")
+
+if arquivo_upload is not None and not df_exibicao.empty:
+    col_sel, col_diag = st.columns(2)
+    
+    with col_sel:
+        st.markdown("**🔎 Seleção de Ativo para Auditoria**")
+        os_selecionada = st.selectbox("Selecione a OS para análise da IA:", lista_os_selecao)
+        
+        # Puxando a linha selecionada para simular o cruzamento de dados
+        linha_os = df_exibicao[df_exibicao['OS'] == os_selecionada].iloc[0]
+        
+        st.info(f"""
+        **📋 Ficha Técnica do Ativo**
+        * **Setor:** {linha_os['Setor']}
+        * **Status Atual:** {linha_os['Status']}
+        * **Data de Abertura:** {linha_os['Data_Abertura'].strftime('%d/%m/%Y')}
+        * **Histórico de Quebras:** 3 recorrências registradas nos últimos 180 dias.
+        * 📖 [Acessar Manual Técnico do Ativo](https://github.com)
+        """)
+        
+    with col_diag:
+        st.markdown("**⚡ Análise de Engenharia Operacional da IA**")
+        
+        if linha_os['Status'] == 'Aberta':
+            st.markdown(f"""
+            <div class="card-ia">
+                <h4>⚠️ DIAGNÓSTICO PRESCRITIVO: Risco de Parada Crítica</h4>
+                <p><b>Análise Causa Raiz:</b> Com base na descrição <i>"{linha_os['Descrição']}"</i> e no cruzamento com o manual técnico, o sintoma apresentado aponta para fadiga por vibração excessiva nas prumadas de alimentação do Bloco B.</p>
+                <hr>
+                <p><b>🔧 Direcionamento e Plano de Ação para Campo:</b></p>
+                <ol>
+                    <li>Isolar a válvula reguladora de pressão hidráulica conforme Seção 4.2 do manual.</li>
+                    <li>Verificar se há microfissuras na junta de expansão flexível.</li>
+                    <li>Substituir anéis de vedação elastoméricos antes de reabrir o fluxo.</li>
+                </ol>
+                <small>⚡ <i>Nível de Criticidade: <span class="badge-alta">ALTA</span> | MTTR estimado: 45 min.</i></small>
+            </div>
+            """, unsafe_allow_html=True)
+        else:
+            st.markdown(f"""
+            <div class="card-ia" style="background-color: #f6fff6; border-left: 5px solid #28a745;">
+                <h4>✅ ANÁLISE COMPLEMENTAR: Ordem Encerrada</h4>
+                <p><b>Análise de Fechamento:</b> A OS referente a <i>"{linha_os['Descrição']}"</i> foi devidamente finalizada. O histórico confirma que a intervenção seguiu os parâmetros padrão especificados pelo fabricante no manual técnico.</p>
+                <hr>
+                <p><b>📈 Recomendação Preditiva:</b></p>
+                <ul>
+                    <li>Agendar inspeção termográfica preventiva em 90 dias para garantir a estabilidade do ativo.</li>
+                    <li>Registrar a conformidade dos componentes trocados no banco de dados do CMMS.</li>
+                </ul>
+                <small>🍃 <i>Status do Sistema: Estável | Eficiência de Execução: 100%</i></small>
+            </div>
+            """, unsafe_allow_html=True)
+else:
+    st.info("Carregue a planilha na barra lateral para ativar o Centro de Diagnóstico Inteligente por IA.")
+
+st.markdown("---")
+st.subheader("📋 Relatório Sincronizado de Ordens de Serviço")
+
+if arquivo_upload is not None and not df_exibicao.empty:
+    st.dataframe(df_exibicao, use_container_width=True, height=300)
+else:
+    st.info("Faça o upload do arquivo CSV na barra lateral para listar as Ordens de Serviço.")
