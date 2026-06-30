@@ -15,6 +15,11 @@ import plotly.graph_objects as go
 
 # Garanta que a página esteja configurada como "wide" no início do arquivo
 # st.set_page_config(layout="wide")
+# 🔐 TRAVA DE SEGURANÇA
+if "logged_in" not in st.session_state or not st.session_state["logged_in"]:
+    st.error("Acesso negado. Por favor, faça o login na página inicial.")
+    st.stop()
+
 
 # ==============================================================================
 # 🕒 BASE DE TEMPO SIMULADA (15 MINUTOS)
