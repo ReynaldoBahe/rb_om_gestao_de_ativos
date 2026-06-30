@@ -1,20 +1,9 @@
 import streamlit as st
-
-# Se houver um st.set_page_config, mantenha-o como a primeira linha.
-# Logo em seguida, cole o bloco abaixo:
-
-# 🔐 TRAVA DE SEGURANÇA
-if "autenticado" not in st.session_state or not st.session_state["autenticado"]:
-    st.error("Acesso negado. Por favor, faca o login na pagina inicial.")
-    st.stop()
-
 import datetime
 import pandas as pd
 import numpy as np
 import plotly.graph_objects as go
 
-# Garanta que a página esteja configurada como "wide" no início do arquivo
-# st.set_page_config(layout="wide")
 # 🔐 TRAVA DE SEGURANÇA
 if "logged_in" not in st.session_state or not st.session_state["logged_in"]:
     st.error("Acesso negado. Por favor, faça o login na página inicial.")
