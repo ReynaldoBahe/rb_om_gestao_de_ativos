@@ -102,7 +102,8 @@ if not st.session_state.logged_in:
         # Inputs de dados estruturados
         usuario = st.text_input("👤 Usuário Corporativo", placeholder="Ex: admin")
         senha = st.text_input("🔑 Senha de Acesso", type="password", placeholder="Digite sua senha")
-               lembrar = st.checkbox("Manter conectado neste dispositivo")
+        lembrar = st.checkbox("Manter conectado neste dispositivo")
+        
         botao_entrar = st.form_submit_button("Entrar no Sistema", use_container_width=True)
         
     if botao_entrar:
@@ -120,14 +121,12 @@ if not st.session_state.logged_in:
             st.error("❌ Credenciais inválidas. Tente novamente.")
 
 else:
-    # Se já estiver logado, executa a aplicação padrão
+    # 🔓 ÁREA INTERNA TOTALMENTE CONFIGURADA: Executa sem nenhuma interferência de estilo
     pg.run()
     
-    # Adiciona botão de Logout na barra lateral pós-login
+    # Adiciona botão de Logout limpo e original na barra lateral pós-login
     with st.sidebar:
         st.markdown("---")
         if st.button("Sair da Conta", use_container_width=True):
-            st.session_state.logged_in = False
-            st.rerun()
             st.session_state.logged_in = False
             st.rerun()
