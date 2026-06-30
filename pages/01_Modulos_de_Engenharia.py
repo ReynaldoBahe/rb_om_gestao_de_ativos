@@ -8,9 +8,9 @@ st.set_page_config(
     layout="wide",
     initial_sidebar_state="expanded"
 )
-import streamlit as st
-import pandas as pd
-
+if "autenticado" not in st.session_state or not st.session_state["autenticado"]:
+    st.error("🔒 Acesso negado. Por favor, faça o login na página inicial.")
+    st.stop()
 # 1. Configuração da Página (Layout Amplo e Corporativo)
 st.set_page_config(
     page_title="RB Consultoria - Gestão de Ativos",
