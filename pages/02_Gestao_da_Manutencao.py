@@ -1,4 +1,7 @@
 import streamlit as st
+
+st.set_page_config(page_title="Gestão da Manutenção - RB Consultoria", page_icon="🛠️", layout="wide")
+
 import pandas as pd
 import altair as alt
 import datetime
