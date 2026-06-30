@@ -103,7 +103,9 @@ if not df.empty:
 # =========================================================================
 st.markdown('<div class="card-home"><div class="card-home-title">Visualizador Operacional de Ativos 3D</div></div>', unsafe_allow_html=True)
 
-speckle_base_url = SPECKLE_STREAM_ID
+# SUBSTiTUA A LINHA QUE QUEBROU POR ESTA:
+speckle_base_url = config.get("speckle_url", "https://speckle.systems")
+
 st.components.v1.html(f'<iframe src="{speckle_base_url}" width="100%" height="600" frameborder="0"></iframe>', height=602)
 
 # =========================================================================
