@@ -6,16 +6,7 @@ st.set_page_config(page_title="RB Consultoria", page_icon="🏢", layout="center
 # Estilização CSS de Alto Padrão - Cores corporativas, sombras reais e card destacado
 st.markdown("""
     <style>
-    /* Configura o fundo geral da aplicação com um tom escuro azulado premium */
-    div[data-testid="stAppViewContainer"] {
-        background-color: #111827 !important;
-        background-image: radial-gradient(at 0% 0%, hsla(217,100%,16%,1) 0, transparent 50%), 
-                          radial-gradient(at 50% 0%, hsla(220,95%,10%,1) 0, transparent 50%) !important;
-    }
-    
-    /* Esconde elementos nativos do Streamlit */
-    [data-testid="stHeader"] { background: transparent !important; }
-    .block-container { padding-top: 4rem !important; max-width: 480px !important; }
+        .block-container { padding-top: 4rem !important; max-width: 480px !important; }
     
     /* Transforma o contêiner padrão em um Card Branco Flutuante com Sombra */
     div[data-testid="stForm"] {
