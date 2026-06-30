@@ -1,9 +1,24 @@
 import streamlit as st
 import pandas as pd
-import altair as alt
 
 # =========================================================================
-# 1. BARREIRA DE SEGURANÇA E MAPEAMENTO MULTI-CLIENTE
+# 1. DECLARAÇÃO OBRIGATÓRIA DO DICIONÁRIO NESTA PÁGINA
+# =========================================================================
+EMPREENDIMENTOS = {
+    "Resort Boa Viagem": {
+        "speckle_url": r"https://speckle.systems",
+        "nome_exibicao": "Resort Boa Viagem - Complexo Hoteleiro",
+        "arquivo_cmms": "CMMS_Export_RB - CMMS_RB.csv"
+    },
+    "Hospital Central": {
+        "speckle_url": r"https://speckle.systems",
+        "nome_exibicao": "Hospital Central - Centro Médico Operacional",
+        "arquivo_cmms": "CMMS_Export_Hospital.csv - CMMS_RB.csv"
+    }
+}
+
+# =========================================================================
+# 2. BARREIRA DE SEGURANÇA CORRIGIDA
 # =========================================================================
 if "logged_in" not in st.session_state or not st.session_state.logged_in:
     st.error("🔒 Acesso negado. Por favor, realize o login primeiro.")
@@ -11,11 +26,8 @@ if "logged_in" not in st.session_state or not st.session_state.logged_in:
 
 cliente_logado = st.session_state.get("cliente_ativo", "Nenhum")
 
-# =========================================================================
-# ADICIONE ESTA NOVA CONDICIONAL PARA O ADMIN LIBERAR A PÁGINA:
-# =========================================================================
 if cliente_logado == "ADMIN":
-    config = EMPREENDIMENTOS["Resort Boa Viagem"]  # Define qual projeto o Admin visualiza por padrão
+    config = EMPREENDIMENTOS["Resort Boa Viagem"]  # Agora o Python sabe o que é EMPREENDIMENTOS
     NOME_PROJETO = f"Visão Geral Administrador ({config['nome_exibicao']})"
     CAMINHO_CSV = config["arquivo_cmms"]
 
