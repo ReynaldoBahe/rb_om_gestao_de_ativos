@@ -8,6 +8,31 @@ st.set_page_config(
     layout="wide",
     initial_sidebar_state="expanded"
 )
+import streamlit as st
+import pandas as pd
+
+# 1. Configuração da Página (Layout Amplo e Corporativo)
+st.set_page_config(
+    page_title="RB Consultoria - Gestão de Ativos",
+    page_icon="🏢",
+    layout="wide",
+    initial_sidebar_state="expanded"
+)
+
+# ==============================================================================
+# ⬇️ INSERIR ESTE BLOCO EXATAMENTE AQUI (ABAIXO DE SET_PAGE_CONFIG) ⬇️
+# ==============================================================================
+if "autenticado" not in st.session_state or not st.session_state["autenticado"]:
+    st.error("🔒 Acesso negado. Por favor, faça o login na página inicial.")
+    st.stop() 
+# ==============================================================================
+
+
+# Estilização CSS para garantir a harmonia visual, tamanho do visualizador...
+st.markdown("""
+    <style>
+    .block-container { padding-top: 1.5rem; padding-bottom: 1rem; }
+...
 
 # Estilização CSS para garantir a harmonia visual, tamanho do visualizador e design dos cards de IA
 st.markdown("""
