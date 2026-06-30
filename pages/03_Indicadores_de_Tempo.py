@@ -1,8 +1,3 @@
-import streamlit as st
-import pandas as pd
-import altair as alt
-import datetime
-
 # =========================================================================
 # 1. BARREIRA DE SEGURANÇA E MAPEAMENTO MULTI-CLIENTE
 # =========================================================================
@@ -25,10 +20,17 @@ EMPREENDIMENTOS = {
     }
 }
 
-if cliente_logado in EMPREENDIMENTOS:
+# NOVA CONDICIONAL: Se for ADMIN, ele ganha uma visão geral padrão (ex: Resort Boa Viagem)
+if cliente_logado == "ADMIN":
+    config = EMPREENDIMENTOS["Resort Boa Viagem"] # Defina qual projeto o Admin vê por padrão
+    NOME_PROJETO = f"Visão Geral Administrador ({config['nome_exibicao']})"
+    CAMINHO_CSV = config["arquivo_cmms"]
+
+elif cliente_logado in EMPREENDIMENTOS:
     config = EMPREENDIMENTOS[cliente_logado]
     NOME_PROJETO = config["nome_exibicao"]
     CAMINHO_CSV = config["arquivo_cmms"]
+    
 else:
     st.warning(f"⚠️ {cliente_logado}, os dados do seu empreendimento estão em processamento.")
     st.stop()
