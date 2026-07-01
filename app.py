@@ -124,12 +124,12 @@ if not st.session_state.logged_in:
             st.error("❌ Credenciais inválidas. Tente novamente.")
 
 else:
-    # 🔓 ÁREA INTERNA TOTALMENTE CONFIGURADA: Executa sem nenhuma interferência de estilo
+    # AREA INTERNA CONFIGURADA: Executa os modulos sem interferencia
     pg.run()
-    
-    # Adiciona botão de Logout limpo e original na barra lateral pós-login
+
+    # Adiciona botao de Logout limpo na barra lateral pos-login
     with st.sidebar:
         st.markdown("---")
-        if st.button("Sair da Conta", use_container_width=True):
+        if st.button("Sair da conta", use_container_width=True):
             st.session_state.logged_in = False
             st.rerun()
