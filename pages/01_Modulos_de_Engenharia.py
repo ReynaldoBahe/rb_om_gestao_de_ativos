@@ -190,11 +190,8 @@ if arquivo_upload is not None and not df_exibicao.empty:
         status_normalizado = str(linha_os['Status']).strip().lower()
         
                 # CASO 1: ORDEM ABERTA (DIAGNÓSTICOS PRESCRITIVOS OPERACIONAIS)
-                if status_normalizado == 'aberta':
-            # Inicializando a biblioteca clássica do Gemini compatível com google-generativeai
+                        if status_normalizado == 'aberta':
             import google.generativeai as genai
-            
-            # Configura a chave de API que você salvou nos Secrets do Streamlit Cloud
             genai.configure(api_key=st.secrets["GEMINI_API_KEY"])
             
             prompt_sistema = """Você é um Engenheiro de Manutenção especialista em análise de falhas e diagnósticos preditivos industriais/prediais. 
@@ -229,11 +226,19 @@ if arquivo_upload is not None and not df_exibicao.empty:
             
             with st.spinner("Gemini analisando histórico e gerando diagnóstico preditivo..."):
                 try:
-                    # Usando o modelo gemini-1.5-flash (totalmente compatível com a biblioteca do seu GitHub)
                     model = genai.GenerativeModel(
                         model_name='gemini-1.5-flash',
                         system_instruction=prompt_sistema
                     )
+                    resposta_ia = model.generate_content(
+                        prompt_usuario,
+                        generation_config={"temperature": 0.3}
+                    )
+                    conteudo_html = resposta_ia.text
+                    st.markdown(conteudo_html, unsafe_allow_html=True)
+                except Exception as erro:
+                    st.error(f"Falha ao conectar com o motor do Gemini: {erro}")
+
                     
                     resposta_ia = model.generate_content(
                         prompt_usuario,
