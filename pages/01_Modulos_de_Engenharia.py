@@ -209,5 +209,4 @@ if arquivo_upload is not None and not df_exibicao.empty:
         status_normalizado = str(linha_os['Status']).strip().lower()
         
         if status_normalizado == 'aberta':
-            import google.generativeai as genai
-            genai.configure(api_key=st.secrets["GEMINI_API_KEY"])
+            # Utilizando a biblioteca moderna google-genai exigida pelos servidores da Google
