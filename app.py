@@ -12,7 +12,7 @@ st.set_page_config(
 if "logged_in" not in st.session_state:
     st.session_state["logged_in"] = False
 
-# 3. Tela de Login Manual Estruturada
+# 3. Estrutura de Autenticação e Roteamento
 if not st.session_state["logged_in"]:
     st.title("🔑 Portal de Acesso - Gestão de Ativos")
     st.markdown("---")
@@ -34,7 +34,9 @@ if not st.session_state["logged_in"]:
                 st.session_state["logged_in"] = True
                 st.session_state["cliente_ativo"] = usuario.upper()
                 st.rerun()
-           else:
+            else:
+                st.error("❌ Credenciais inválidas. Tente novamente.")
+else:
     # 4. ÁREA INTERNA: Menu de Navegação Clássico para carregar os módulos
     st.sidebar.title("Navegação")
     st.sidebar.markdown(f"👤 Conectado como: **{st.session_state['cliente_ativo']}**")
