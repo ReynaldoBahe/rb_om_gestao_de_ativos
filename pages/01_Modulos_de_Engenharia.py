@@ -131,7 +131,8 @@ if arquivo_upload is not None and not df_exibicao.empty:
     
     with col_sel:
         st.markdown("**🔎 Seleção de Ativo para Auditoria**")
-        os_selecionada = st.selectbox("Selecione a OS para análise da IA:", lista_os_selecao)
+        os_selecionada = st.selectbox("Selecione a OS para análise da IA:", lista_os_selecao, key="os_ia_selector")
+
         
         # Puxando a linha selecionada para simular o cruzamento de dados
         linha_os = df_exibicao[df_exibicao['OS'] == os_selecionada].iloc[0]
