@@ -153,7 +153,7 @@ def extrair_dados_reais_speckle(object_id):
             fabricante = propriedades.get("family", "Fabricante Padrão")
             modelo = propriedades.get("type", "Modelo Geral")
             
-        return equipamento, fabricante, modelo
+        return equipamento, manufacturer, modelo
     except:
         return "Ativo em Auditoria", "Fabricante Padrão", "Modelo de Engenharia"
 
@@ -167,9 +167,10 @@ if arquivo_upload is not None and not df_exibicao.empty:
         st.markdown("**🔎 Seleção de Ativo para Auditoria**")
         os_selecionada = st.selectbox("Selecione a OS para análise da IA:", lista_os_selecao, key="seletor_ia_final_limpo")
         
-        # Captura a linha da OS selecionada adicionando o índice correto
+        # Correção segura para extrair a linha do dataframe
         linha_os = df_exibicao[df_exibicao['OS'] == os_selecionada].iloc[0]
         
+        # Armazena o ID original limpo para fazer as verificações da IA
         id_coluna_b = str(linha_os.get('ID', '')).strip().lower()
         equipamento, fabricante, modelo = extrair_dados_reais_speckle(id_coluna_b)
             
@@ -184,7 +185,7 @@ if arquivo_upload is not None and not df_exibicao.empty:
         if total_recorrencias > 1:
             datas_quebras = sorted(pd.to_datetime(historico_ativo['Data_Abertura'], errors='coerce').dropna())
             if len(datas_quebras) > 1:
-                dias_totais = (datas_quebras[-1] - datas_quebras).days
+                dias_totais = (datas_quebras[-1] - datas_quebras[0]).days
                 mtbf_calculado = round(dias_totais / (total_recorrencias - 1), 1)
                 texto_mtbf = f"{mtbf_calculado} dias"
             else:
@@ -209,5 +210,3 @@ if arquivo_upload is not None and not df_exibicao.empty:
         
     with col_diag:
         st.markdown("**⚡ Análise de Engenharia Operacional da IA**")
-        status_normalizado = str(linha_os['Status']).strip().lower()
-        
