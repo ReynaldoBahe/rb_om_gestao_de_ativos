@@ -153,7 +153,7 @@ def extrair_dados_reais_speckle(object_id):
             fabricante = propriedades.get("family", "Fabricante Padrão")
             modelo = propriedades.get("type", "Modelo Geral")
             
-        return equipamento, manufacturer, modelo
+        return equipamento, fabricante, modelo
     except:
         return "Ativo em Auditoria", "Fabricante Padrão", "Modelo de Engenharia"
 
@@ -167,10 +167,10 @@ if arquivo_upload is not None and not df_exibicao.empty:
         st.markdown("**🔎 Seleção de Ativo para Auditoria**")
         os_selecionada = st.selectbox("Selecione a OS para análise da IA:", lista_os_selecao, key="seletor_ia_final_limpo")
         
-        # Correção segura para extrair a linha do dataframe
+        # Coleta a linha de exibição correspondente
         linha_os = df_exibicao[df_exibicao['OS'] == os_selecionada].iloc[0]
         
-        # Armazena o ID original limpo para fazer as verificações da IA
+        # Normalização flexível limpando espaços em branco extras nas duas pontas
         id_coluna_b = str(linha_os.get('ID', '')).strip().lower()
         equipamento, fabricante, modelo = extrair_dados_reais_speckle(id_coluna_b)
             
@@ -178,9 +178,9 @@ if arquivo_upload is not None and not df_exibicao.empty:
         if fabricante in ['nan', '']: fabricante = "Fabricante Padrão"
         if modelo in ['nan', '']: modelo = "Modelo Geral"
 
-        # --- CÁLCULO ESTATÍSTICO DE HISTÓRICO REAL EM TEMPO REAL ---
-        historico_ativo = df_os[df_os['ID'].astype(str).str.strip().str.lower() == id_coluna_b]
-        total_recorrencias = len(historico_ativo)
+        # --- CORREÇÃO DA BUSCA: Filtro tolerante que ignora strings quebradas e caixas altas ---
+        historico_ativo = df_os[df_os['ID'].astype(str).str.strip().str.lower().str.contains(id_coluna_b, na=False) | id_coluna_b.contains(df_os['ID'].astype(str).str.strip().str.lower(), na=False)]
+        total_recorrencias = len(historico_ativo) if len(historico_ativo) > 0 else 1
         
         if total_recorrencias > 1:
             datas_quebras = sorted(pd.to_datetime(historico_ativo['Data_Abertura'], errors='coerce').dropna())
@@ -205,8 +205,3 @@ if arquivo_upload is not None and not df_exibicao.empty:
         * **Status Atual:** {linha_os['Status']} | **Abertura:** {data_abertura_formatada}
         * 📊 **Histórico de Quebras:** {total_recorrencias} ocorrências no banco CMMS.
         * ⏱️ **MTBF Estatístico Real:** {texto_mtbf}
-        * 🆔 **ID do Objeto 3D:** `{id_coluna_b}`
-        """)
-        
-    with col_diag:
-        st.markdown("**⚡ Análise de Engenharia Operacional da IA**")
