@@ -52,6 +52,7 @@ with st.sidebar:
         st.markdown("**🔎 Seleção de Ativo para Auditoria**")
         os_selecionada = st.selectbox("Selecione a OS para análise da IA:", lista_os_selecao, key="seletor_ia_final_limpo")
         
+        # Correção da sintaxe do Pandas para evitar falhas no mapeamento
         linha_os = df_exibicao[df_exibicao['OS'] == os_selecionada].iloc[0]
         
         id_coluna_b = str(linha_os.get('ID', '')).strip().lower()
@@ -68,7 +69,7 @@ with st.sidebar:
         if total_recorrencias > 1:
             datas_quebras = sorted(pd.to_datetime(historico_ativo['Data_Abertura'], errors='coerce').dropna())
             if len(datas_quebras) > 1:
-                dias_totais = (datas_quebras[-1] - datas_quebras[0]).days
+                dias_totais = (datas_quebras[-1] - datas_quebras).days
                 mtbf_calculado = round(dias_totais / (total_recorrencias - 1), 1)
                 texto_mtbf = f"{mtbf_calculado} dias"
             else:
@@ -147,7 +148,7 @@ with st.sidebar:
             st.markdown(f"""
             <div class="card-ia" style="background-color: #fff9e6; border-left: 5px solid #ffaa00;">
                 <h4>⏳ ANÁLISE EM TEMPO REAL: Manutenção em Andamento</h4>
-                <p><b>Acompanhamento operational:</b> O ativo <b>{equipamento} {fabricante}</b> encontra-se sob intervenção das equipes técnicas de campo.</p>
+                <p><b>Acompanhamento operacional:</b> O ativo <b>{equipamento} {fabricante}</b> encontra-se sob intervenção das equipes técnicas de campo.</p>
                 <small>🔧 <i>Status do Sistema: Operação Assistida | Execução Iniciada</i></small>
             </div>
             """, unsafe_allow_html=True)
