@@ -130,3 +130,4 @@ else:
         if st.button("Sair da Conta", use_container_width=True):
             st.session_state.logged_in = False
             st.rerun()
+# Atualização de rotas do ecossistema de módulos
