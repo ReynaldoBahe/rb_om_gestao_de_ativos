@@ -66,12 +66,14 @@ with st.sidebar:
             contagem_status["Pausada"] = len(df_mes[df_mes['Status'].str.lower() == 'pausado'])
             contagem_status["Fechado"] = len(df_mes[df_mes['Status'].str.lower() == 'fechado'])
             
-            st.subheader("Filtros de Visão")
-            lista_setores = ["Todos"] + sorted(list(df_mes['Setor'].unique()))
+                       setores_validos = df_mes['Setor'].dropna().astype(str).unique()
+            lista_setores = ["Todos"] + sorted(list(setores_validos))
             setor_selecionado = st.selectbox("Filtrar por Setor:", lista_setores)
             
-            lista_status = ["Todos"] + sorted(list(df_mes['Status'].unique()))
+            status_validos = df_mes['Status'].dropna().astype(str).unique()
+            lista_status = ["Todos"] + sorted(list(status_validos))
             status_selecionado = st.selectbox("Filtrar por Status:", lista_status)
+
             
             # Aplicando os filtros na tabela de exibição
             df_exibicao = df_mes.copy()
