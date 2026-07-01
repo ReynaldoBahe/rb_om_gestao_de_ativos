@@ -190,50 +190,61 @@ if arquivo_upload is not None and not df_exibicao.empty:
         status_normalizado = str(linha_os['Status']).strip().lower()
         
                 # CASO 1: ORDEM ABERTA (DIAGNÓSTICOS PRESCRITIVOS OPERACIONAIS)
-        if status_normalizado == 'aberta':
-            # Se for a Tubulação de Incêndio do Speckle
-            if id_coluna_b == "4dc3484a7e8cefdfcd6108f0b06cb715":
-                st.markdown(f"""
-                <div class="card-ia" style="background-color: #fff0f0; border-left: 5px solid #d9534f;">
-                    <h4>⚠️ DIAGNÓSTICO PRESCRITIVO: Perda de Pressão na Rede de Incêndio (PPCI)</h4>
-                    <p><b>Análise Causa Raiz:</b> Com base na descrição <i>"{linha_os['Descrição']}"</i> e no cruzamento com os parâmetros do material <b>{modelo}</b>, o sistema aponta fadiga em juntas roscadas e acoplamentos no Bloco 1, gerando queda de pressão estática.</p>
-                    <hr>
-                    <p><b>🔧 Direcionamento e Plano de Ação Real (Segurança contra Incêndio):</b></p>
-                    <ol>
-                        <li>Isolar o trecho da prumada afetada fechando a válvula de gaveta supervisionada mais próxima.</li>
-                        <li>Realizar teste de estanqueidade localizada e inspection visual ao longo da linha de {modelo}.</li>
-                        <li>Substituir a seção danificada antes de pressurizar a linha com a bomba Jockey.</li>
-                    </ol>
-                    <small>🚒 <i>Nível de Criticidade: <span class="badge-alta" style="background-color: #ffb3b3; color: #b30000;">CRÍTICA</span> | MTTR estimado: 120 min.</i></small>
-                </div>
-                """, unsafe_allow_html=True)
+                if status_normalizado == 'aberta':
+            # Inicializando a biblioteca clássica do Gemini compatível com google-generativeai
+            import google.generativeai as genai
             
-            # Se for o Ar Condicionado Fujitsu do Speckle
-            elif id_coluna_b == "540a5723a18454b4145959ce501469bc":
-                st.markdown(f"""
-                <div class="card-ia">
-                    <h4>⚠️ DIAGNÓSTICO PRESCRITIVO: Falha no Sistema de Climatização</h4>
-                    <p><b>Análise Causa Raiz:</b> Com base na descrição <i>"{linha_os['Descrição']}"</i> e no cruzamento com os parâmetros do fabricante <b>{fabricante} ({modelo})</b>, o sintoma aponta para obstrução no sistema de drenagem da evaporadora ou saturação dos filtros de ar.</p>
-                    <hr>
-                    <p><b>🔧 Direcionamento e Plano de Ação Real ({fabricante}):</b></p>
-                    <ol>
-                        <li>Desligar o disjuntor do circuito de climatização para garantir a segurança elétrica.</li>
-                        <li>Remover a carenagem frontal do modelo {modelo} conforme o manual técnico do fabricante.</li>
-                        <li>Desobstruir a bandeja de condensado e testar o fluxo da tubulação flexível.</li>
-                    </ol>
-                    <small>⚡ <i>Nível de Criticidade: <span class="badge-alta">ALTA</span> | MTTR estimado: 35 min.</i></small>
-                </div>
-                """, unsafe_allow_html=True)
-                
-            else:
-                # Fallback geral para qualquer outra OS aberta na planilha
-                st.markdown(f"""
-                <div class="card-ia" style="background-color: #f7f9fa; border-left: 5px solid #00c0ef;">
-                    <h4>⚠️ DIAGNÓSTICO OPERACIONAL: Ordem de Serviço em Triagem</h4>
-                    <p><b>Análise Causa Raiz:</b> Ativo técnico <b>{equipamento}</b> aguardando conclusão do cruzamento de metadados BIM.</p>
-                    <hr>
-                    <p><b>🔧 Recomendações Preliminares:</b></p>
-                    <ul>
+            # Configura a chave de API que você salvou nos Secrets do Streamlit Cloud
+            genai.configure(api_key=st.secrets["GEMINI_API_KEY"])
+            
+            prompt_sistema = """Você é um Engenheiro de Manutenção especialista em análise de falhas e diagnósticos preditivos industriais/prediais. 
+            Sua missão é emitir um diagnóstico prescritivo estruturado em HTML estrito baseado nos dados fornecidos."""
+            
+            prompt_usuario = f"""
+            Analise a Ordem de Serviço atual cruzando-a estritamente com o histórico de manutenção anterior do ativo para identificar padrões de falhas repetitivas.
+            
+            DADOS DA OS ATUAL:
+            - Ordem de Serviço: {linha_os['OS']}
+            - Descrição da Falha Atual: {linha_os['Descrição']}
+            - Setor Responsável: {linha_os['Setor']}
+            
+            PARÂMETROS TÉCNICOS DO ATIVO (SPECKLE/BIM):
+            - Tipo de Equipamento: {equipamento}
+            - Fabricante: {fabricante}
+            - Modelo/Especificação: {modelo}
+            - ID Único do Objeto: {id_coluna_b}
+            
+            HISTÓRICO COMPLETO DE OCORRÊNCIAS ANTERIORES DO ATIVO (COLUNA B):
+            {texto_historico_ia}
+            
+            INSTRUÇÕES DE FORMATAÇÃO:
+            Retorne a resposta envolvida em uma única tag <div class="card-ia"> (não use blocos de código markdown ```html).
+            A estrutura interna deve conter:
+            1. Um título h4 com o "DIAGNÓSTICO PRESCRITIVO: [Nome da Falha Encontrada]".
+            2. Um parágrafo contendo a "Análise Causa Raiz" fundamentada na reincidência do histórico (se houver).
+            3. Uma linha horizontal <hr>.
+            4. Um bloco ordenado <ol> contendo um "Direcionamento e Plano de Ação Real" de até 3 passos práticos para a equipe técnica de campo.
+            5. Uma tag <small> indicando o Nível de Criticidade e o MTTR estimado em minutos.
+            """
+            
+            with st.spinner("Gemini analisando histórico e gerando diagnóstico preditivo..."):
+                try:
+                    # Usando o modelo gemini-1.5-flash (totalmente compatível com a biblioteca do seu GitHub)
+                    model = genai.GenerativeModel(
+                        model_name='gemini-1.5-flash',
+                        system_instruction=prompt_sistema
+                    )
+                    
+                    resposta_ia = model.generate_content(
+                        prompt_usuario,
+                        generation_config={"temperature": 0.3}
+                    )
+                    
+                    conteudo_html = resposta_ia.text
+                    st.markdown(conteudo_html, unsafe_allow_html=True)
+                    
+                except Exception as erro:
+                    st.error(f"Falha ao conectar com o motor do Gemini: {erro}")
                         <li>Verificar a descrição da falha: <i>"{linha_os['Descrição']}"</i>.</li>
                         <li>Realizar a inspeção visual preliminar em campo para coletar o TAG do componente.</li>
                     </ul>
