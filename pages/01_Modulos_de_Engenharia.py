@@ -195,8 +195,10 @@ if arquivo_upload is not None and not df_exibicao.empty:
                 try:
                     # ALTERADO PARA USAR O IMPORT TRADICIONAL COMPATÍVEL COM O SEU AMBIENTE
                     import google.generativeai as generativeai
-                    generativeai.configure(api_key=st.secrets["GEMINI_API_KEY"])
-                    model = generativeai.GenerativeModel('gemini-1.5-flash')
+api_key_real = st.secrets.get("GEMINI_API_KEY", st.secrets.get("gemini_api_key", None))
+generativeai.configure(api_key=api_key_real)
+model = generativeai.GenerativeModel('gemini-1.5-flash')
+
                     
                     prompt_dinamico = f"""
                     Você é um Engenheiro de Confiabilidade e Manutenção.
