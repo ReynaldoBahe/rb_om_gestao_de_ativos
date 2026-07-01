@@ -163,7 +163,8 @@ if arquivo_upload is not None and not df_exibicao.empty:
         st.markdown("**🔎 Seleção de Ativo para Auditoria**")
         os_selecionada = st.selectbox("Selecione a OS para análise da IA:", lista_os_selecao, key="seletor_ia_final_limpo")
         
-        linha_os = df_exibicao[df_exibicao['OS'] == os_selecionada].iloc
+        linha_os = df_exibicao[df_exibicao['OS'] == os_selecionada].iloc[0]
+
 
         
         id_coluna_b = str(linha_os.get('ID', '')).strip().lower()
