@@ -48,7 +48,7 @@ with st.sidebar:
     if arquivo_upload is not None and not df_exibicao.empty:
     col_sel, col_diag = st.columns(2)
     
-        with col_sel:
+    with col_sel:
         st.markdown("**🔎 Seleção de Ativo para Auditoria**")
         os_selecionada = st.selectbox("Selecione a OS para análise da IA:", lista_os_selecao, key="seletor_ia_final_limpo")
         
@@ -90,7 +90,6 @@ with st.sidebar:
         * ⏱️ **MTBF Estatístico Real:** {texto_mtbf}
         * 🆔 **ID do Objeto 3D:** `{id_coluna_b}`
         """)
-
         
     with col_diag:
         st.markdown("**⚡ Análise de Engenharia Operacional da IA**")
@@ -148,7 +147,7 @@ with st.sidebar:
             st.markdown(f"""
             <div class="card-ia" style="background-color: #fff9e6; border-left: 5px solid #ffaa00;">
                 <h4>⏳ ANÁLISE EM TEMPO REAL: Manutenção em Andamento</h4>
-                <p><b>Acompanhamento operacional:</b> O ativo <b>{equipamento} {fabricante}</b> encontra-se sob intervenção das equipes técnicas de campo.</p>
+                <p><b>Acompanhamento operational:</b> O ativo <b>{equipamento} {fabricante}</b> encontra-se sob intervenção das equipes técnicas de campo.</p>
                 <small>🔧 <i>Status do Sistema: Operação Assistida | Execução Iniciada</i></small>
             </div>
             """, unsafe_allow_html=True)
