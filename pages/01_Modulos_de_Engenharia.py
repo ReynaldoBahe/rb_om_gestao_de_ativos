@@ -71,9 +71,7 @@ with st.sidebar:
             lista_setores = ["Todos"] + sorted(list(setores_validos))
             setor_selecionado = st.selectbox("Filtrar por Setor:", lista_setores)
             
-            status_validos = df_mes['Status'].dropna().astype(str).unique()
-            lista_status = ["Todos"] + sorted(list(status_validos))
-            status_selected_box = st.selectbox("Filtrar por Status:", lista_status)
+            status_selected_box = st.selectbox("Filtrar por Status:", ["Todos"] + sorted(list(df_mes['Status'].dropna().astype(str).unique())))
             
             # Aplicando os filtros na tabela de exibição
             df_exibicao = df_mes.copy()
@@ -169,7 +167,7 @@ if arquivo_upload is not None and not df_exibicao.empty:
         st.markdown("**🔎 Seleção de Ativo para Auditoria**")
         os_selecionada = st.selectbox("Selecione a OS para análise da IA:", lista_os_selecao, key="seletor_ia_final_limpo")
         
-        # 🔴 CORREÇÃO DO INDICE: Inserido o [0] final para ler a linha como série estruturada
+        # 🎯 CORREÇÃO CRUCIAL AQUI: .iloc[0] completo com os colchetes restabelecidos
         linha_os = df_exibicao[df_exibicao['OS'] == os_selecionada].iloc[0]
         
         id_coluna_b = str(linha_os.get('ID', '')).strip().lower()
@@ -209,3 +207,5 @@ if arquivo_upload is not None and not df_exibicao.empty:
         * 🆔 **ID do Objeto 3D:** `{id_coluna_b}`
         """)
         
+    with col_diag:
+        st.markdown("**⚡ Análise de Engenharia Operacional da IA**")
