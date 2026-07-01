@@ -30,78 +30,80 @@ st.markdown("""
     </style>
 """, unsafe_allow_html=True)
 
-# --- BOTÃO DE UPLOAD REPOSICIONADO PARA GARANTIR VISIBILIDADE ---
-st.sidebar.title("Painel de Controle")
-st.sidebar.markdown("---")
-arquivo_upload = st.sidebar.file_uploader("Carregar Planilha CMMS (.csv)", type=["csv"], key="uploader_sidebar_principal")
-
-# Inicialização global das variáveis para evitar escopo local isolado
-df_exibicao = pd.DataFrame()
-lista_os_selecao = ["Nenhuma OS selecionada"]
-contagem_status = {"Aberta": 0, "Em Atendimento": 0, "Pausada": 0, "Fechado": 0}
-
-if arquivo_upload is not None:
-    try:
-        # Lendo a planilha carregada pelo usuário
-        df_os = pd.read_csv(arquivo_upload)
-        df_os.columns = df_os.columns.str.strip()
-        
-        # Padronização e limpeza dos dados
-        df_os['Data_Abertura'] = pd.to_datetime(df_os['Data_Abertura'], errors='coerce')
-        df_os['Status'] = df_os['Status'].astype(str).str.strip()
-        df_os['Setor'] = df_os['Setor'].astype(str).str.strip()
-        df_os['OS'] = df_os['OS'].astype(str).str.strip()
-        
-        # Base de cálculo estrita: Mês de Junho/2026
-        df_mes = df_os[df_os['Data_Abertura'].dt.strftime('%Y-%m') == '2026-06']
-        
-        # --- ATUALIZAÇÃO DIRETA NO ESCOPO GLOBAL DO DICIONÁRIO ---
-        contagem_status["Aberta"] = len(df_mes[df_mes['Status'].str.lower() == 'aberta'])
-        contagem_status["Em Atendimento"] = len(df_mes[df_mes['Status'].str.lower() == 'em atendimento'])
-        contagem_status["Pausada"] = len(df_mes[df_mes['Status'].str.lower() == 'pausado'])
-        contagem_status["Fechado"] = len(df_mes[df_mes['Status'].str.lower() == 'fechado'])
-        
-        st.sidebar.subheader("Filtros de Visão")
-        setores_validos = df_mes['Setor'].dropna().astype(str).unique()
-        lista_setores = ["Todos"] + sorted(list(setores_validos))
-        setor_selecionado = st.sidebar.selectbox("Filtrar por Setor:", lista_setores)
-        
-        status_validos = df_mes['Status'].dropna().astype(str).unique()
-        lista_status = ["Todos"] + sorted(list(status_validos))
-        status_selected_box = st.sidebar.selectbox("Filtrar por Status:", lista_status)
-        
-        # Aplicando os filtros na tabela de exibição
-        df_exibicao = df_mes.copy()
-        if setor_selecionado != "Todos":
-            df_exibicao = df_exibicao[df_exibicao['Setor'] == setor_selecionado]
-        if status_selected_box != "Todos":
-            df_exibicao = df_exibicao[df_exibicao['Status'] == status_selected_box]
-        
-        # Lista de OS para o seletor da IA baseada no filtro ativo
-        lista_os_selecao = sorted(list(df_exibicao['OS'].unique()))
-        
-        st.sidebar.markdown("---")
-        st.sidebar.subheader("Métricas de Manutenção")
-        
-        total_abertas_mes = len(df_mes)
-        if total_abertas_mes > 0:
-            total_fechadas_filtradas = len(df_mes[df_mes['Status'].str.lower() == 'fechado'])
-            sla_calculado = round((total_fechadas_filtradas / total_abertas_mes) * 100, 1)
-            
-            st.sidebar.metric(
-                label="SLA de Atendimento (Meta: 95%)",
-                value=f"{sla_calculado}%",
-                delta=f"{round(sla_calculado - 95.0, 1)}% em relação à meta",
-                delta_color="normal" if sla_calculado >= 95 else "inverse"
-            )
-    except Exception as e:
-        st.error(f"Erro ao processar as colunas: {e}")
-else:
-    # Caso não tenha arquivo na sidebar, exibe um container de atenção no centro da tela
-    st.info("👋 Bem-vindo! Para iniciar a auditoria de confiabilidade, carregue sua planilha CMMS utilizando o botão na barra lateral ou o campo abaixo.")
-    arquivo_upload = st.file_uploader("📥 Carregar Planilha CMMS (.csv)", type=["csv"], key="uploader_central_reserva")
+# 2. Layout de Tela: Barra Lateral (Métricas Operacionais)
+with st.sidebar:
+    st.title("Painel de Controle")
+    st.markdown("---")
+    
+    # Componente de Upload do arquivo CSV gerado pelo CMMS
+    arquivo_upload = st.file_uploader("Carregar Planilha CMMS (.csv)", type=["csv"])
+    
+    st.markdown("---")
+    
+    # Inicialização global das variáveis para evitar escopo local isolado
+    df_exibicao = pd.DataFrame()
+    lista_os_selecao = ["Nenhuma OS selecionada"]
+    contagem_status = {"Aberta": 0, "Em Atendimento": 0, "Pausada": 0, "Fechado": 0}
+    
     if arquivo_upload is not None:
-        st.rerun()
+        try:
+            # Lendo a planilha carregada pelo usuário
+            df_os = pd.read_csv(arquivo_upload)
+            df_os.columns = df_os.columns.str.strip()
+            
+            # Padronização e limpeza dos dados
+            df_os['Data_Abertura'] = pd.to_datetime(df_os['Data_Abertura'], errors='coerce')
+            df_os['Status'] = df_os['Status'].astype(str).str.strip()
+            df_os['Setor'] = df_os['Setor'].astype(str).str.strip()
+            df_os['OS'] = df_os['OS'].astype(str).str.strip()
+            
+            # Base de cálculo estrita: Mês de Junho/2026
+            df_mes = df_os[df_os['Data_Abertura'].dt.strftime('%Y-%m') == '2026-06']
+            
+            # --- ATUALIZAÇÃO DIRETA NO ESCOPO GLOBAL DO DICIONÁRIO ---
+            contagem_status["Aberta"] = len(df_mes[df_mes['Status'].str.lower() == 'aberta'])
+            contagem_status["Em Atendimento"] = len(df_mes[df_mes['Status'].str.lower() == 'em atendimento'])
+            contagem_status["Pausada"] = len(df_mes[df_mes['Status'].str.lower() == 'pausado'])
+            contagem_status["Fechado"] = len(df_mes[df_mes['Status'].str.lower() == 'fechado'])
+            
+            st.subheader("Filtros de Visão")
+            setores_validos = df_mes['Setor'].dropna().astype(str).unique()
+            lista_setores = ["Todos"] + sorted(list(setores_validos))
+            setor_selecionado = st.selectbox("Filtrar por Setor:", lista_setores)
+            
+            status_validos = df_mes['Status'].dropna().astype(str).unique()
+            lista_status = ["Todos"] + sorted(list(status_validos))
+            status_selected_box = st.selectbox("Filtrar por Status:", lista_status)
+            
+            # Aplicando os filtros na tabela de exibição
+            df_exibicao = df_mes.copy()
+            if setor_selecionado != "Todos":
+                df_exibicao = df_exibicao[df_exibicao['Setor'] == setor_selecionado]
+            if status_selected_box != "Todos":
+                df_exibicao = df_exibicao[df_exibicao['Status'] == status_selected_box]
+            
+            # Lista de OS para o seletor da IA baseada no filtro ativo
+            lista_os_selecao = sorted(list(df_exibicao['OS'].unique()))
+            
+            st.markdown("---")
+            st.subheader("Métricas de Manutenção")
+            
+            total_abertas_mes = len(df_mes)
+            if total_abertas_mes > 0:
+                total_fechadas_filtradas = len(df_mes[df_mes['Status'].str.lower() == 'fechado'])
+                sla_calculado = round((total_fechadas_filtradas / total_abertas_mes) * 100, 1)
+                
+                st.metric(
+                    label="SLA de Atendimento (Meta: 95%)",
+                    value=f"{sla_calculado}%",
+                    delta=f"{round(sla_calculado - 95.0, 1)}% em relação à meta",
+                    delta_color="normal" if sla_calculado >= 95 else "inverse"
+                )
+        except Exception as e:
+            st.error(f"Erro ao processar as colunas: {e}")
+    else:
+        st.warning("Aguardando upload da planilha...")
+        st.metric(label="SLA de Atendimento (Meta: 95%)", value="-- %", delta="Sem dados")
 
 # 3. Layout de Tela: Área Central (Maquete 3D Panorâmica do Speckle)
 st.title("Visualizador Operacional de Ativos 3D")
@@ -167,7 +169,7 @@ if arquivo_upload is not None and not df_exibicao.empty:
         st.markdown("**🔎 Seleção de Ativo para Auditoria**")
         os_selecionada = st.selectbox("Selecione a OS para análise da IA:", lista_os_selecao, key="seletor_ia_final_limpo")
         
-        # Correção aqui: adicionado o colchete definitivo [0] ao final do .iloc
+        # Correção aqui: adicionado o colchete com índice zero [0] para carregar a linha perfeitamente
         linha_os = df_exibicao[df_exibicao['OS'] == os_selecionada].iloc[0]
         
         id_coluna_b = str(linha_os.get('ID', '')).strip().lower()
@@ -206,4 +208,3 @@ if arquivo_upload is not None and not df_exibicao.empty:
         * ⏱️ **MTBF Estatístico Real:** {texto_mtbf}
         * 🆔 **ID do Objeto 3D:** `{id_coluna_b}`
         """)
-        
