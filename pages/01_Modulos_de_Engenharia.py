@@ -46,28 +46,61 @@ with st.sidebar:
     contagem_status = {"Aberta": 0, "Em Atendimento": 0, "Pausada": 0, "Fechado": 0}
     
     if arquivo_upload is not None:
-                    with st.spinner("Gemini analisando histórico e gerando diagnóstico preditivo..."):
-                try:
-                    resposta_ia = client.models.generate_content(
-                        model='gemini-2.5-flash',
-                        contents=prompt_usuario,
-                        config=types.GenerateContentConfig(
-                            system_instruction=prompt_sistema,
-                            temperature=0.3
-                        )
-                    )
-                    
-                    # ⚠️ AJUSTE SEGURO: Garante a captura limpa e bruta do texto gerado pela IA
-                    if resposta_ia and hasattr(resposta_ia, 'text') and resposta_ia.text:
-                        conteudo_html = str(resposta_ia.text).strip()
-                        # Limpa qualquer tag extra de marcação markdown de bloco de código HTML
-                        conteudo_html = conteudo_html.replace("```html", "").replace("```", "").strip()
-                        st.markdown(conteudo_html, unsafe_allow_html=True)
-                    else:
-                        st.error("A IA processou o pedido, mas o retorno veio em um formato inválido ou vazio.")
-                except Exception as erro:
-                    st.error(f"Erro na comunicação com a API do Gemini: {erro}")
-
+        try:
+            # Lendo a planilha carregada pelo usuário
+            df_os = pd.read_csv(arquivo_upload)
+            df_os.columns = df_os.columns.str.strip()
+            
+            # Padronização e limpeza dos dados
+            df_os['Data_Abertura'] = pd.to_datetime(df_os['Data_Abertura'], errors='coerce')
+            df_os['Status'] = df_os['Status'].astype(str).str.strip()
+            df_os['Setor'] = df_os['Setor'].astype(str).str.strip()
+            df_os['OS'] = df_os['OS'].astype(str).str.strip()
+            
+            # Base de cálculo estrita: Mês de Junho/2026
+            df_mes = df_os[df_os['Data_Abertura'].dt.strftime('%Y-%m') == '2026-06']
+            
+            # --- ATUALIZAÇÃO DIRETA NO ESCOPO GLOBAL DO DICIONÁRIO ---
+            contagem_status["Aberta"] = len(df_mes[df_mes['Status'].str.lower() == 'aberta'])
+            contagem_status["Em Atendimento"] = len(df_mes[df_mes['Status'].str.lower() == 'em atendimento'])
+            contagem_status["Pausada"] = len(df_mes[df_mes['Status'].str.lower() == 'pausado'])
+            contagem_status["Fechado"] = len(df_mes[df_mes['Status'].str.lower() == 'fechado'])
+            
+            st.subheader("Filtros de Visão")
+            setores_validos = df_mes['Setor'].dropna().astype(str).unique()
+            lista_setores = ["Todos"] + sorted(list(setores_validos))
+            setor_selecionado = st.selectbox("Filtrar por Setor:", lista_setores)
+            
+            status_validos = df_mes['Status'].dropna().astype(str).unique()
+            lista_status = ["Todos"] + sorted(list(status_validos))
+            status_selecionado = st.selectbox("Filtrar por Status:", lista_status)
+            
+            # Aplicando os filtros na tabela de exibição
+            df_exibicao = df_mes.copy()
+            if setor_selecionado != "Todos":
+                df_exibicao = df_exibicao[df_exibicao['Setor'] == setor_selecionado]
+            if status_selecionado != "Todos":
+                df_exibicao = df_exibicao[df_exibicao['Status'] == status_selecionado]
+            
+            # Lista de OS para o seletor da IA baseada no filtro ativo
+            lista_os_selecao = sorted(list(df_exibicao['OS'].unique()))
+            
+            st.markdown("---")
+            st.subheader("Métricas de Manutenção")
+            
+            total_abertas_mes = len(df_mes)
+            if total_abertas_mes > 0:
+                total_fechadas_filtradas = len(df_mes[df_mes['Status'].str.lower() == 'fechado'])
+                sla_calculado = round((total_fechadas_filtradas / total_abertas_mes) * 100, 1)
+                
+                st.metric(
+                    label="SLA de Atendimento (Meta: 95%)",
+                    value=f"{sla_calculado}%",
+                    delta=f"{round(sla_calculado - 95.0, 1)}% em relação à meta",
+                    delta_color="normal" if sla_calculado >= 95 else "inverse"
+                )
+        except Exception as e:
+            st.error(f"Erro ao processar as colunas: {e}")
     else:
         st.warning("Aguardando upload da planilha...")
         st.metric(label="SLA de Atendimento (Meta: 95%)", value="-- %", delta="Sem dados")
@@ -130,9 +163,8 @@ if arquivo_upload is not None and not df_exibicao.empty:
         st.markdown("**🔎 Seleção de Ativo para Auditoria**")
         os_selecionada = st.selectbox("Selecione a OS para análise da IA:", lista_os_selecao, key="seletor_ia_final_limpo")
         
-        linha_os = df_exibicao[df_exibicao['OS'] == os_selecionada].iloc[0]
-
-
+        filtro_os = df_exibicao[df_exibicao['OS'] == os_selecionada]
+        linha_os = filtro_os.iloc[0]
         
         id_coluna_b = str(linha_os.get('ID', '')).strip().lower()
         equipamento, fabricante, modelo = extrair_dados_reais_speckle(id_coluna_b)
@@ -141,7 +173,7 @@ if arquivo_upload is not None and not df_exibicao.empty:
         if fabricante in ['nan', '']: fabricante = "Fabricante Padrão"
         if modelo in ['nan', '']: modelo = "Modelo Geral"
             
-        data_abertura_formatada = "N/A" if pd.isna(linha_os['Data_Abertura']) else linha_os['Data_Abertura'].strftime('%d/%m/%Y')
+        data_abertura_formatada = "N/A" if pd.isna(linha_os.get('Data_Abertura')) else linha_os['Data_Abertura'].strftime('%d/%m/%Y')
         
         # --- BUSCA DO HISTÓRICO DO ATIVO VIA PANDAS ---
         df_historico_ativo = df_os[(df_os['ID'].astype(str).str.strip().str.lower() == id_coluna_b) & (df_os['OS'] != os_selecionada)]
@@ -162,7 +194,7 @@ if arquivo_upload is not None and not df_exibicao.empty:
         * **Equipamento:** {equipamento}
         * **Fabricante:** {fabricante}
         * **Modelo:** {modelo}
-        * **Status Atual:** {linha_os['Status']}
+        * **Status Atual:** {linha_os.get('Status', 'Aberto')}
         * **Data de Abertura:** {data_abertura_formatada}
         * **ID do Objeto 3D:** `{id_coluna_b}`
         """)
@@ -175,9 +207,7 @@ if arquivo_upload is not None and not df_exibicao.empty:
         
     with col_diag:
         st.markdown("**⚡ Análise de Engenharia Operacional da IA**")
-        status_normalizado = str(linha_os['Status']).strip().lower()
+        status_normalizado = str(linha_os.get('Status', '')).strip().lower()
         
         if status_normalizado == 'aberta':
             from google import genai
-            from google.genai import types
-            
