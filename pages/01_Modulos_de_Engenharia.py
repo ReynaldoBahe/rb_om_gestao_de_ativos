@@ -73,14 +73,14 @@ with st.sidebar:
             
             status_validos = df_mes['Status'].dropna().astype(str).unique()
             lista_status = ["Todos"] + sorted(list(status_validos))
-            status_selecionado = st.selectbox("Filtrar por Status:", lista_status)
+            status_selected_box = st.selectbox("Filtrar por Status:", lista_status)
             
             # Aplicando os filtros na tabela de exibição
             df_exibicao = df_mes.copy()
             if setor_selecionado != "Todos":
                 df_exibicao = df_exibicao[df_exibicao['Setor'] == setor_selecionado]
-            if status_selecionado != "Todos":
-                df_exibicao = df_exibicao[df_exibicao['Status'] == status_selecionado]
+            if status_selected_box != "Todos":
+                df_exibicao = df_exibicao[df_exibicao['Status'] == status_selected_box]
             
             # Lista de OS para o seletor da IA baseada no filtro ativo
             lista_os_selecao = sorted(list(df_exibicao['OS'].unique()))
@@ -146,7 +146,7 @@ def extrair_dados_reais_speckle(object_id):
         elif "mechanical" in categoria_bim or "mechanical equipment" in categoria_bim:
             equipamento = "Sistema de Climatização / Ar Condicionado"
             familia_texto = propriedades.get("family", "Fujitsu General")
-            fabricante = familia_texto.split('_')[0] if '_' in familia_texto else familia_texto
+            fabricante = familia_texto.split('_') if '_' in familia_texto else familia_texto
             modelo = propriedades.get("type", "ASYG18LFCA")
         else:
             equipamento = propriedades.get("category", "Ativo Operacional")
@@ -155,7 +155,6 @@ def extrair_dados_reais_speckle(object_id):
             
         return equipamento, fabricante, modelo
     except:
-        # Fallback inteligente baseado nos parâmetros reais identificados na maquete Speckle
         if object_id == "540a5723a18454b4145959ce501469bc":
             return "Sistema de Climatização / Ar Condicionado", "Fujitsu General", "ASYG18LFCA"
         return "Ativo em Auditoria", "Fabricante Padrão", "Modelo de Engenharia"
@@ -170,10 +169,9 @@ if arquivo_upload is not None and not df_exibicao.empty:
         st.markdown("**🔎 Seleção de Ativo para Auditoria**")
         os_selecionada = st.selectbox("Selecione a OS para análise da IA:", lista_os_selecao, key="seletor_ia_final_limpo")
         
-        # Uso dos colchetes corretos no iloc para evitar falhas silenciosas de renderização
+        # Correção aqui: adicionado o colchete [0] ao final do .iloc
         linha_os = df_exibicao[df_exibicao['OS'] == os_selecionada].iloc[0]
         
-        # Tratamento de ID tolerante para bater de forma flexível com os metadados BIM
         id_coluna_b = str(linha_os.get('ID', '')).strip().lower()
         equipamento, fabricante, modelo = extrair_dados_reais_speckle(id_coluna_b)
             
@@ -188,7 +186,7 @@ if arquivo_upload is not None and not df_exibicao.empty:
         if total_recorrencias > 1:
             datas_quebras = sorted(pd.to_datetime(historico_ativo['Data_Abertura'], errors='coerce').dropna())
             if len(datas_quebras) > 1:
-                dias_totais = (datas_quebras[-1] - datas_quebras[0]).days
+                dias_totais = (datas_quebras[-1] - datas_quebras).days
                 mtbf_calculado = round(dias_totais / (total_recorrencias - 1), 1)
                 texto_mtbf = f"{mtbf_calculado} dias"
             else:
@@ -206,3 +204,9 @@ if arquivo_upload is not None and not df_exibicao.empty:
         * **Equipamento:** {equipamento}
         * **Fabricante:** {fabricante} | **Modelo:** {modelo}
         * **Status Atual:** {linha_os['Status']} | **Abertura:** {data_abertura_formatada}
+        * 📊 **Histórico de Quebras:** {total_recorrencias} ocorrências no banco CMMS.
+        * ⏱️ **MTBF Estatístico Real:** {texto_mtbf}
+        * 🆔 **ID do Objeto 3D:** `{id_coluna_b}`
+        """)
+        
+    with col_diag:
