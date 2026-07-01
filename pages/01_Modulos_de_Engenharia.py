@@ -140,14 +140,63 @@ if arquivo_upload is not None and not df_exibicao.empty:
         # Certifique-se de que a coluna B na sua planilha se chama exatamente 'ID'
         id_coluna_b = str(linha_os.get('ID', '')).strip()
         
-        if id_coluna_b == "540a5723a18454b4145959ce501469bc":
-            equipamento = "Ar Condicionado Split (Evaporadora)"
-            fabricante = "Fujitsu General"
-            modelo = "ASYG18LFCA"
+        # 5. Centro de Diagnóstico Avançado (IA Preditiva)
+st.subheader("🧠 Centro de Diagnóstico Avançado (IA Preditiva)")
+
+# Função integrada de varredura na API do Speckle para extrair parâmetros BIM reais
+def extrair_dados_reais_speckle(object_id):
+    try:
+        from specklepy.api.client import SpeckleClient
+        from specklepy.api.wrapper import StreamWrapper
+        
+        # URL da maquete configurada no projeto
+        url_stream = "https://speckle.systems"
+        wrapper = StreamWrapper(url_stream)
+        client = wrapper.get_client()
+        
+        # Recupera o objeto do servidor do Speckle usando o ID da coluna B
+        objeto_BIM = client.object.get(stream_id=wrapper.stream_id, object_id=object_id)
+        propriedades = objeto_BIM.data.get("properties", {})
+        categoria_bim = str(objeto_BIM.data.get("category", "")).lower()
+        
+        # Varredura dinâmica baseada na categoria estrutural do objeto
+        if "pipes" in categoria_bim or "pipe" in categoria_bim:
+            equipamento = "Tubulação Hidráulica de Combate a Incêndio"
+            fabricante = propriedades.get("family", "Rede Geral - PPCI")
+            modelo = propiedades.get("type", "Aço Galvanizado")
+        elif "mechanical" in categoria_bim:
+            equipamento = "Sistema de Climatização / Ar Condicionado"
+            familia_texto = propriedades.get("family", "Fabricante Homologado")
+            fabricante = familia_texto.split('_')[0] if '_' in familia_texto else familia_texto
+            modelo = propriedades.get("type", "Modelo de Campo")
         else:
-            equipamento = str(linha_os.get('Equipamento', 'Ativo Operacional'))
-            fabricante = str(linha_os.get('Fabricante', 'Fabricante Padrão'))
-            modelo = str(linha_os.get('Modelo', 'Modelo Geral'))
+            equipamento = propriedades.get("category", "Ativo Operacional")
+            fabricante = propriedades.get("family", "Fabricante Padrão")
+            modelo = propriedades.get("type", "Modelo Geral")
+            
+        return equipamento, fabricante, modelo
+    except:
+        # Fallback inteligente se o ID não for encontrado ou falhar a conexão durante o teste
+        return "Ativo em Auditoria", "Fabricante Padrão", "Modelo de Engenharia"
+
+if arquivo_upload is not None and not df_exibicao.empty:
+    col_sel, col_diag = st.columns(2)
+    
+    with col_sel:
+        st.markdown("**🔎 Seleção de Ativo para Auditoria**")
+        os_selecionada = st.selectbox("Selecione a OS para análise da IA:", lista_os_selecao)
+        
+        # Puxando a linha selecionada para simular o cruzamento de dados
+        linha_os = df_exibicao[df_exibicao['OS'] == os_selecionada].iloc[0]
+        
+        # --- EXECUÇÃO DA BUSCA DINÂMICA VIA API DO SPECKLE ---
+        id_coluna_b = str(linha_os.get('ID', '')).strip().lower()
+        equipamento, fabricante, modelo = extrair_dados_reais_speckle(id_coluna_b)
+            
+        # Limpeza para evitar exibição de 'nan' caso venha nulo da planilha
+        if equipamento in ['nan', '']: equipamento = "Ativo Operacional"
+        if fabricante in ['nan', '']: fabricante = "Fabricante Padrão"
+        if modelo in ['nan', '']: modelo = "Modelo Geral"
             
         # Formatação segura da data de abertura
         data_abertura_formatada = "N/A" if pd.isna(linha_os['Data_Abertura']) else linha_os['Data_Abertura'].strftime('%d/%m/%Y')
@@ -164,26 +213,43 @@ if arquivo_upload is not None and not df_exibicao.empty:
         
     with col_diag:
         st.markdown("**⚡ Análise de Engenharia Operacional da IA**")
-        
         status_normalizado = str(linha_os['Status']).strip().lower()
         
-        # CASO 1: ORDEM ABERTA (CONECTADA AO CONTEXTO DA FUJITSU SE FOR O CASO)
+        # CASO 1: ORDEM ABERTA (CONEXÃO REAL E DINÂMICA COM O GEMINI)
         if status_normalizado == 'aberta':
-            st.markdown(f"""
-            <div class="card-ia">
-                <h4>⚠️ DIAGNÓSTICO PRESCRITIVO: Falha no Sistema de Climatização</h4>
-                <p><b>Análise Causa Raiz:</b> Com base na descrição <i>"{linha_os['Descrição']}"</i> e no cruzamento com os parâmetros do fabricante <b>{fabricante} ({modelo})</b> obtidos via Speckle, o sintoma aponta para obstrução no sistema de drenagem da evaporadora ou saturação dos filtros de ar de alta eficiência.</p>
-                <hr>
-                <p><b>🔧 Direcionamento e Plano de Ação Real ({fabricante}):</b></p>
-                <ol>
-                    <li>Desligar o disjuntor do circuito de climatização para garantir a segurança elétrica.</li>
-                    <li>Remover a carenagem frontal do modelo {modelo} conforme o manual técnico do fabricante.</li>
-                    <li>Desobstruir a bandeja de condensado e testar o fluxo da tubulação flexível.</li>
-                    <li>Limpar ou substituir os filtros de ar eletrostáticos antes do comissionamento.</li>
-                </ol>
-                <small>⚡ <i>Nível de Criticidade: <span class="badge-alta">ALTA</span> | MTTR estimado: 35 min.</i></small>
-            </div>
-            """, unsafe_allow_html=True)
+            with st.spinner("IA analisando parâmetros do modelo Speckle..."):
+                try:
+                    from google import genai
+                    client = genai.Client(api_key=st.secrets["GEMINI_API_KEY"])
+                    
+                    prompt_dinamico = f"""
+                    Você é um Engenheiro de Confiabilidade e Manutenção.
+                    Gere um diagnóstico prescritivo real com base nestes parâmetros extraídos em tempo real do modelo 3D:
+                    
+                    - Ativo: {equipamento}
+                    - Fabricante/Família: {fabricante}
+                    - Modelo/Tipo de Material: {modelo}
+                    - Sintoma Reportado: "{linha_os['Descrição']}"
+                    
+                    Escreva uma análise de causa raiz específica para a engenharia desse componente ({modelo}) e crie um plano de ação passo a passo de campo.
+                    Retorne o texto formatado estritamente dentro desta estrutura de tags HTML:
+                    <h4>⚠️ DIAGNÓSTICO PRESCRITIVO: [Título do Diagnóstico]</h4>
+                    <p><b>Análise Causa Raiz:</b> [Explicação técnica curta]</p>
+                    <hr>
+                    <p><b>🔧 Direcionamento e Plano de Ação Real ({fabricante}):</b></p>
+                    <ol>
+                        <li>[Passo 1]</li>
+                        <li>[Passo 2]</li>
+                        <li>[Passo 3]</li>
+                    </ol>
+                    <small>⚡ <i>Criticidade gerada por você | MTTR estimado.</i></small>
+                    """
+                    
+                    resposta = client.models.generate_content(model='gemini-2.5-flash', contents=prompt_dinamico)
+                    st.markdown(f'<div class="card-ia">{resposta.text}</div>', unsafe_allow_html=True)
+                except Exception as erro_ia:
+                    # Fallback visual caso a chave do Gemini não esteja configurada nos Secrets
+                    st.error(f"Falha ao conectar com o Gemini para análise dinâmica: {erro_ia}")
             
         # CASO 2: ORDEM EM ATENDIMENTO
         elif status_normalizado == 'em atendimento':
@@ -194,43 +260,31 @@ if arquivo_upload is not None and not df_exibicao.empty:
                 <hr>
                 <p><b>💡 Recomendação de Monitoramento:</b></p>
                 <ul>
-                    <li>Garantir o registro de trocas de peças originais {fabricante} em tempo real.</li>
-                    <li>Verificar se os testes de pressão/estanqueidade estão sendo executados antes do fechamento.</li>
+                    <li>Garantir o registro de trocas de peças originais no banco do CMMS.</li>
                 </ul>
                 <small>🔧 <i>Status do Sistema: Operação Assistida | Execução Iniciada</i></small>
             </div>
             """, unsafe_allow_html=True)
             
         # CASO 3: ORDEM PAUSADA
-        elif status_normalizado == 'pausado' or status_normalizado == 'pausada':
+        elif status_normalizado in ['pausado', 'pausada']:
             st.markdown(f"""
             <div class="card-ia" style="background-color: #f7f7f7; border-left: 5px solid #6c757d;">
                 <h4>⏸️ ANÁLISE COMPLEMENTAR: Ordem Suspensa / Pausada</h4>
                 <p><b>Análise de Parada:</b> A atividade no ativo {modelo} está congelada temporariamente. O sistema indica aguardo de insumos ou autorização externa.</p>
-                <hr>
-                <p><b>📋 Plano de Mitigação:</b></p>
-                <ul>
-                    <li>Confirmar no módulo de compras o prazo de entrega para componentes específicos da {fabricante}.</li>
-                </ul>
                 <small>⚠️ <i>Status do Sistema: Aguardando Liberação | Cronograma Impactado</i></small>
             </div>
             """, unsafe_allow_html=True)
             
         # CASO 4: ORDEM FECHADA
-        elif status_normalizado == 'fechado' or status_normalizado == 'fechada':
+        elif status_normalizado in ['fechado', 'fechada']:
             st.markdown(f"""
             <div class="card-ia" style="background-color: #f6fff6; border-left: 5px solid #28a745;">
                 <h4>✅ ANÁLISE COMPLEMENTAR: Ordem Encerrada</h4>
                 <p><b>Análise de Fechamento:</b> A OS referente a <i>"{linha_os['Descrição']}"</i> foi devidamente finalizada seguindo as diretrizes técnicas do modelo {modelo}.</p>
-                <hr>
-                <p><b>📈 Recomendação Preditiva:</b></p>
-                <ul>
-                    <li>Agendar inspeção preventiva no equipamento {fabricante} em 90 dias para garantir a estabilidade térmica.</li>
-                </ul>
                 <small>🍃 <i>Status do Sistema: Estável | Eficiência de Execução: 100%</i></small>
             </div>
             """, unsafe_allow_html=True)
-            
         else:
             st.warning(f"Status '{linha_os['Status']}' identificado, mas nenhuma regra de IA correspondente foi mapeada.")
 else:
