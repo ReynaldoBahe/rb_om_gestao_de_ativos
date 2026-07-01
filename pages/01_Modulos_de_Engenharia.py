@@ -190,7 +190,7 @@ if arquivo_upload is not None and not df_exibicao.empty:
         status_normalizado = str(linha_os['Status']).strip().lower()
         
                 # CASO 1: ORDEM ABERTA (DIAGNÓSTICOS PRESCRITIVOS OPERACIONAIS)
-                        if status_normalizado == 'aberta':
+        if status_normalizado == 'aberta':
             import google.generativeai as genai
             genai.configure(api_key=st.secrets["GEMINI_API_KEY"])
             
